@@ -1,5 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import { readVaultFileQueryOptions } from '../../queries'
+import {
+  readVaultFileQueryOptions,
+  shouldPreviewQueryOptions,
+} from '../../queries'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { MimeIcon } from './MimeIcon'
 import { streamVaultFile } from '../../actions'
@@ -11,6 +14,7 @@ export function FilePreview({
   meta: VaultFileMeta
   vaultId: string
 }) {
+  const { data: shouldPreview } = useQuery(shouldPreviewQueryOptions())
   const mime = meta.original.mime
   const isImage = mime.startsWith('image/')
 
@@ -23,6 +27,8 @@ export function FilePreview({
 
     activeControllerRef.current?.abort()
     setUrl(null)
+
+    if (!shouldPreview) return
 
     const controller = new AbortController()
     activeControllerRef.current = controller
@@ -40,7 +46,7 @@ export function FilePreview({
       controller.abort()
       if (url) URL.revokeObjectURL(url)
     }
-  }, [vaultId, meta.fileId])
+  }, [vaultId, meta.fileId, shouldPreview])
 
   if (isImage && url) {
     return (
