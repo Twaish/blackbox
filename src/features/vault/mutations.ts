@@ -6,6 +6,7 @@ import {
   createVault,
   deleteVaultFile,
   removeSession,
+  toggleShouldPreview,
   unlinkVault,
   unlockVault,
 } from './actions'
@@ -87,4 +88,12 @@ export const useCreateVault = () =>
       queryClient.invalidateQueries({
         queryKey: queryKeys.all(),
       }),
+  })
+
+export const useToggleShouldPreview = () =>
+  useMutation({
+    mutationFn: () => toggleShouldPreview(),
+    onSuccess: (enabled) => {
+      queryClient.setQueryData(queryKeys.shouldPreview(), enabled)
+    },
   })

@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query'
 import {
+  getShouldPreview,
   getVaultFiles,
   getVaults,
   hasSession,
@@ -21,6 +22,10 @@ export const queryKeys = {
     'meta',
   ],
   hasSession: (vaultId: string) => [...queryKeys.all(), 'hasSession', vaultId],
+
+  // Settings
+  settings: () => ['settings'],
+  shouldPreview: () => [...queryKeys.settings(), 'should-preview'],
 }
 
 export const readVaultFileQueryOptions = (vaultId: string, fileId: string) =>
@@ -54,4 +59,11 @@ export const hasSessionQueryOptions = (vaultId: string) =>
   queryOptions({
     queryKey: queryKeys.hasSession(vaultId),
     queryFn: () => hasSession(vaultId),
+  })
+
+export const shouldPreviewQueryOptions = () =>
+  queryOptions({
+    queryKey: queryKeys.shouldPreview(),
+    queryFn: () => getShouldPreview(),
+    staleTime: Infinity,
   })

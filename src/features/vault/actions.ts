@@ -183,3 +183,19 @@ export async function addVaultFileStream(vaultId: string, file: File) {
     uploadId,
   })
 }
+
+export async function getShouldPreview(): Promise<boolean> {
+  const value = localStorage.getItem('should-preview')
+  return value === 'true'
+}
+
+export async function setShouldPreview(enabled: boolean): Promise<void> {
+  localStorage.setItem('should-preview', String(enabled))
+}
+
+export async function toggleShouldPreview(): Promise<boolean> {
+  const current = await getShouldPreview()
+  const next = !current
+  localStorage.setItem('should-preview', String(next))
+  return next
+}
