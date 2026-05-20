@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "jsx": "react",
+    "target": "ESNext",
+    "module": "nodenext",
+    "lib": ["dom", "ESNext"],
+    "experimentalDecorators": true,
+    "composite": true,
+    "declaration": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowJs": false,
+    "esModuleInterop": true,
+    "noImplicitAny": true,
+    "strict": true,
+
+    "outDir": "dist",
+    "moduleResolution": "nodenext",
+    "resolveJsonModule": true,
+
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.main.json" },
+    { "path": "./tsconfig.preload.json" },
+    { "path": "./tsconfig.renderer.json" }
+  ],
+  "exclude": ["node_modules", "dist", "out"]
+}

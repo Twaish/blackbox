@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@shared/*": ["./shared/*"],
+      "@main/*": ["./electron/main/*"]
+    }
+  },
+  "include": ["./src/**/*", "./shared/**/*", "./electron/main/**/*"]
+}

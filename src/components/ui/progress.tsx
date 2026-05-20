@@ -1,0 +1,37 @@
+import * as React from 'react'
+import { Progress as ProgressPrimitive } from 'radix-ui'
+
+import { cn } from '@/utils/tailwind'
+
+function Progress({
+  className,
+  ...props
+}: Omit<React.ComponentProps<typeof ProgressPrimitive.Root>, 'value'>) {
+  return (
+    <ProgressPrimitive.Root
+      data-slot="progress"
+      className={cn(
+        'bg-muted relative flex h-1 w-full items-center overflow-x-hidden rounded-full',
+        className,
+      )}
+      {...props}
+    ></ProgressPrimitive.Root>
+  )
+}
+
+function ProgressIndicator({
+  className,
+  value,
+  ...props
+}: React.ComponentProps<typeof ProgressPrimitive.Root>) {
+  return (
+    <ProgressPrimitive.Indicator
+      data-slot="progress-indicator"
+      className={cn('bg-primary size-full flex-1 transition-all', className)}
+      style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
+      {...props}
+    />
+  )
+}
+
+export { Progress, ProgressIndicator }

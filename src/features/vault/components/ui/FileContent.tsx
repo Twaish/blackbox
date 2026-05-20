@@ -1,0 +1,187 @@
+import { useSuspenseQuery } from '@tanstack/react-query'
+import { readVaultFileQueryOptions } from '../../queries'
+import { ComponentProps, useEffect, useMemo, useRef, useState } from 'react'
+import { cn } from '@/utils/tailwind'
+import { streamVaultFile } from '../../actions'
+import { Loader2 } from 'lucide-react'
+
+export function FileContent({
+  meta,
+  vaultId,
+  className,
+}: {
+  meta: VaultFileMeta
+  vaultId: string
+  className?: string
+}) {
+  const { data: fileBuffer } = useSuspenseQuery(
+    readVaultFileQueryOptions(vaultId, meta.fileId),
+  )
+
+  const bytes = new Uint8Array(fileBuffer.data)
+
+  const mime = meta.original.mime
+
+  const isText = mime.startsWith('text/') || mime === 'application/json'
+
+  const textContent = useMemo(() => {
+    if (!isText || !fileBuffer) return null
+
+    return new TextDecoder('utf-8').decode(bytes)
+  }, [fileBuffer, isText])
+
+  const blobUrl = useMemo(() => {
+    if (!fileBuffer) return null
+
+    const blob = new Blob([bytes], {
+      type: mime,
+    })
+
+    return URL.createObjectURL(blob)
+  }, [fileBuffer, mime])
+
+  if (!fileBuffer) return null
+
+  if (isText && textContent != null) {
+    return (
+      <div
+        className={cn(
+          'bg-secondary/50 flex w-full flex-1 overflow-auto p-2',
+          className,
+        )}
+      >
+        <pre className="font-mono text-sm">{textContent}</pre>
+      </div>
+    )
+  }
+
+  if (!blobUrl) return null
+
+  if (mime.startsWith('image/')) {
+    return (
+      <img
+        draggable={false}
+        className={cn(className)}
+        src={blobUrl}
+        alt={meta.original.name}
+      />
+    )
+  }
+
+  if (mime.startsWith('video/')) {
+    return <video className={className} src={blobUrl} controls />
+  }
+
+  if (mime.startsWith('audio/')) {
+    return <audio className={className} src={blobUrl} controls />
+  }
+
+  if (mime === 'application/pdf') {
+    return <iframe src={blobUrl} className={cn('h-200 w-full', className)} />
+  }
+
+  return <div>{mime} mime-type is not supported</div>
+}
+
+export function StreamedFileContent({
+  meta,
+  vaultId,
+  className,
+}: {
+  meta: VaultFileMeta
+  vaultId: string
+  className: string
+}) {
+  const [url, setUrl] = useState<string | null>(null)
+  const [textContent, setTextContent] = useState<string | null>(null)
+  const mime = meta.original.mime
+  const isText = mime.startsWith('text/') || mime === 'application/json'
+
+  const activeControllerRef = useRef<AbortController | null>(null)
+
+  useEffect(() => {
+    activeControllerRef.current?.abort()
+    setUrl(null)
+    setTextContent(null)
+
+    const controller = new AbortController()
+    activeControllerRef.current = controller
+
+    const streamOptions = (
+      options: Partial<Parameters<typeof streamVaultFile>[0]>,
+    ) => ({
+      vaultId,
+      fileId: meta.fileId,
+      onError: console.error,
+      signal: controller.signal,
+      ...options,
+    })
+
+    if (isText) {
+      const decoder = new TextDecoder('utf-8')
+      let accumulatedText = ''
+      streamVaultFile(
+        streamOptions({
+          onChunk(chunk) {
+            accumulatedText += decoder.decode(chunk, { stream: true })
+            setTextContent(accumulatedText)
+          },
+        }),
+      )
+    } else {
+      streamVaultFile(
+        streamOptions({
+          onDone(blob) {
+            setUrl(URL.createObjectURL(blob))
+          },
+        }),
+      )
+    }
+
+    return () => {
+      controller.abort()
+      if (url) URL.revokeObjectURL(url)
+    }
+  }, [vaultId, meta.fileId, isText])
+
+  if (isText && textContent != null)
+    return <TextContent className={className}>{textContent}</TextContent>
+
+  if (!url) {
+    return <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
+  }
+
+  if (mime.startsWith('image/'))
+    return (
+      <img
+        draggable={false}
+        className={cn(className)}
+        src={url}
+        alt={meta.original.name}
+      />
+    )
+
+  if (mime.startsWith('video/'))
+    return <video className={className} src={url} controls />
+
+  if (mime.startsWith('audio/'))
+    return <audio className={className} src={url} controls />
+
+  if (mime === 'application/pdf')
+    return <iframe src={url} className={cn('h-200 w-full', className)} />
+
+  return <div>{mime} mime-type is not supported</div>
+}
+
+function TextContent({ className, children }: ComponentProps<'div'>) {
+  return (
+    <div
+      className={cn(
+        'bg-secondary/50 flex w-full flex-1 overflow-auto p-2',
+        className,
+      )}
+    >
+      <pre className="font-mono text-sm">{children}</pre>
+    </div>
+  )
+}
