@@ -5,7 +5,7 @@ import { shouldPreviewQueryOptions } from '../../queries'
 
 export function PreviewToggle() {
   const { mutate: setShouldPreview } = useSetShouldPreview()
-  const { data: shouldPreview } = useQuery(shouldPreviewQueryOptions())
+  const { data: shouldPreview = true } = useQuery(shouldPreviewQueryOptions())
 
   return <Switch checked={shouldPreview} onCheckedChange={setShouldPreview} />
 }
