@@ -41,6 +41,6 @@ interface IVaultManager {
     name: string
     mime: string
   }): Promise<string>
-  uploadChunk(args: { uploadId: string; chunk: number[] }): void
+  uploadChunk(args: { uploadId: string; chunk: ArrayBuffer }): void
   finishUpload(args: { uploadId: string }): Promise<string>
 }

@@ -417,7 +417,7 @@ export class VaultManager implements IVaultManager {
     chunk,
   }: {
     uploadId: string
-    chunk: number[]
+    chunk: ArrayBuffer
   }): Promise<void> {
     const upload = this.uploads.get(uploadId)
 
