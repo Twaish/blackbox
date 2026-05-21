@@ -6,6 +6,7 @@ import { useVaultFiles, useVaultFilesStore } from '../VaultFiles'
 import { EmptyFileView } from './EmptyFileView'
 import { VaultFile } from './VaultFile'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/utils/tailwind'
 
 const ITEM_HEIGHT = 320
 const GAP = 1
@@ -54,7 +55,7 @@ export function FileGridView() {
       clearTimeout(timer)
       ro.disconnect()
     }
-  }, [parentRef.current])
+  }, [])
 
   const visibleFileIds = useMemo(
     () => fileIds.slice(0, visibleCount),
@@ -92,47 +93,57 @@ export function FileGridView() {
     }
   }, [virtualItems, rows.length, visibleCount, fileIds.length])
 
-  if (!fileIds.length) {
-    return <EmptyFileView />
-  }
+  const hasFiles = fileIds.length
 
   return (
-    <div ref={parentRef} className="h-full overflow-auto p-px pb-50">
-      <div
-        className="relative"
-        style={{
-          height: rowVirtualizer.getTotalSize(),
-        }}
-      >
-        {virtualItems.map((virtualRow) => (
+    <div
+      ref={parentRef}
+      className={cn(
+        'h-full overflow-auto p-px',
+        hasFiles ? 'pb-50' : 'overflow-hidden',
+      )}
+    >
+      {!hasFiles ? (
+        <EmptyFileView />
+      ) : (
+        <>
           <div
-            key={virtualRow.key}
-            className="absolute top-0 left-0 grid w-full gap-px"
+            className="relative"
             style={{
-              transform: `translateY(${virtualRow.start}px)`,
-              gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+              height: rowVirtualizer.getTotalSize(),
             }}
           >
-            {rows[virtualRow.index].map((fileId) => (
-              <VaultFile key={fileId} viewStyle="grid" fileId={fileId} />
+            {virtualItems.map((virtualRow) => (
+              <div
+                key={virtualRow.key}
+                className="absolute top-0 left-0 grid w-full gap-px"
+                style={{
+                  transform: `translateY(${virtualRow.start}px)`,
+                  gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+                }}
+              >
+                {rows[virtualRow.index].map((fileId) => (
+                  <VaultFile key={fileId} viewStyle="grid" fileId={fileId} />
+                ))}
+              </div>
             ))}
           </div>
-        ))}
-      </div>
 
-      {visibleCount < fileIds.length && (
-        <Button
-          onClick={() =>
-            setVisibleCount((prev) =>
-              Math.min(prev + PAGE_SIZE, fileIds.length),
-            )
-          }
-          size={'sm'}
-          variant={'secondary'}
-          className="mx-auto my-4 flex text-center"
-        >
-          Load more
-        </Button>
+          {visibleCount < fileIds.length && (
+            <Button
+              onClick={() =>
+                setVisibleCount((prev) =>
+                  Math.min(prev + PAGE_SIZE, fileIds.length),
+                )
+              }
+              size={'sm'}
+              variant={'secondary'}
+              className="mx-auto my-4 flex text-center"
+            >
+              Load more
+            </Button>
+          )}
+        </>
       )}
     </div>
   )
