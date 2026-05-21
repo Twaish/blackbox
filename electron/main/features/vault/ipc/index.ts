@@ -1,6 +1,5 @@
 import { Modules } from '@/helpers/ipc/types'
-import { eventIterator, ORPCError, os } from '@orpc/server'
-import z from 'zod'
+import { ORPCError, os } from '@orpc/server'
 
 function withErrorHandling<TArgs extends any[], TResult>(
   fn: (...args: TArgs) => Promise<TResult> | TResult,
@@ -44,22 +43,6 @@ export function createVaultRouters(modules: Modules) {
     readFile: os.handler(
       withErrorHandling(({ input }) => modules.VaultManager.readFile(input)),
     ),
-    streamFile: os
-      .input(
-        z.object({
-          vaultId: z.string(),
-          fileId: z.string(),
-        }),
-      )
-      .output(eventIterator(z.instanceof(Uint8Array)))
-      .handler(async function* ({ input, signal }) {
-        for await (const chunk of modules.VaultManager.streamFile({
-          ...input,
-          signal,
-        })) {
-          yield new Uint8Array(chunk)
-        }
-      }),
     readMeta: os.handler(
       withErrorHandling(({ input }) => modules.VaultManager.readMeta(input)),
     ),

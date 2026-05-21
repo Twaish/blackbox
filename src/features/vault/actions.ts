@@ -1,6 +1,4 @@
 import { ipc } from '@/core/ipc'
-import { consumeEventIterator } from '@orpc/client'
-import { ipcRenderer } from 'electron'
 
 export async function addVaultFile(
   vaultId: string,
