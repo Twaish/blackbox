@@ -189,8 +189,9 @@ export async function getShouldPreview(): Promise<boolean> {
   return value === 'true'
 }
 
-export async function setShouldPreview(enabled: boolean): Promise<void> {
+export async function setShouldPreview(enabled: boolean): Promise<boolean> {
   localStorage.setItem('should-preview', String(enabled))
+  return enabled
 }
 
 export async function toggleShouldPreview(): Promise<boolean> {
