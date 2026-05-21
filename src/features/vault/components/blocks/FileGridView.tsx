@@ -75,7 +75,7 @@ export function FileGridView() {
     count: rows.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => ITEM_HEIGHT + GAP,
-    overscan: 1,
+    overscan: 5,
   })
 
   const virtualItems = rowVirtualizer.getVirtualItems()
@@ -114,7 +114,7 @@ export function FileGridView() {
             }}
           >
             {rows[virtualRow.index].map((fileId) => (
-              <VaultFile key={fileId} fileId={fileId} />
+              <VaultFile key={fileId} viewStyle="grid" fileId={fileId} />
             ))}
           </div>
         ))}
@@ -191,7 +191,6 @@ export function FileGridViewInfinite() {
 
   useEffect(() => {
     const el = parentRef.current
-
     if (!el) return
 
     const onScroll = () => {
@@ -206,6 +205,7 @@ export function FileGridViewInfinite() {
         setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, fileIds.length))
       }
     }
+    onScroll()
 
     el.addEventListener('scroll', onScroll)
 
@@ -227,7 +227,7 @@ export function FileGridViewInfinite() {
         }}
       >
         {visibleFileIds.map((fileId) => (
-          <VaultFile key={fileId} fileId={fileId} />
+          <VaultFile key={fileId} viewStyle="grid" fileId={fileId} />
         ))}
       </div>
 
@@ -257,7 +257,7 @@ export function FileGridViewAll() {
   return (
     <div className="grid h-min w-full grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-px p-px pb-50">
       {fileIds.map((fileId) => (
-        <VaultFile key={fileId} fileId={fileId} />
+        <VaultFile key={fileId} viewStyle="grid" fileId={fileId} />
       ))}
     </div>
   )

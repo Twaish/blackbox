@@ -1,20 +1,28 @@
 import { cn } from '@/utils/tailwind'
 import { useQuery } from '@tanstack/react-query'
-import {
-  readVaultFileMetaQueryOptions,
-  viewStyleQueryOptions,
-} from '../../queries'
+import { readVaultFileMetaQueryOptions } from '../../queries'
 import { FileHeader } from '../ui/FileHeader'
 import { FilePreview } from '../ui/FilePreview'
 import { useVaultFiles, useVaultFilesStore } from '../VaultFiles'
+import { memo, useCallback } from 'react'
+import { ViewStyle } from '../../actions'
 
-export function VaultFile({ fileId }: { fileId: string }) {
+export const VaultFile = memo(function VaultFile({
+  fileId,
+  viewStyle,
+}: {
+  fileId: string
+  viewStyle: ViewStyle
+}) {
   const vaultId = useVaultFiles()
   const { data: meta } = useQuery(
     readVaultFileMetaQueryOptions(vaultId, fileId),
   )
-  const { data: viewStyle } = useQuery(viewStyleQueryOptions())
   const setSelectedFileId = useVaultFilesStore((s) => s.setSelectedFileId)
+
+  const handleClick = useCallback(() => {
+    if (meta) setSelectedFileId(meta.fileId, vaultId)
+  }, [meta?.fileId, vaultId, setSelectedFileId])
 
   if (!meta) return
 
@@ -26,7 +34,7 @@ export function VaultFile({ fileId }: { fileId: string }) {
           ? 'h-80 flex-col'
           : 'h-12 w-full items-center gap-2',
       )}
-      onClick={() => setSelectedFileId(meta.fileId, vaultId)}
+      onClick={handleClick}
     >
       <div
         className={cn(
@@ -42,4 +50,4 @@ export function VaultFile({ fileId }: { fileId: string }) {
       />
     </button>
   )
-}
+})

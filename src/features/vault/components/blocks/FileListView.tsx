@@ -47,7 +47,7 @@ export function FileListView() {
               transform: `translateY(${virtualRow.start}px)`,
             }}
           >
-            <VaultFile fileId={fileIds[virtualRow.index]} />
+            <VaultFile viewStyle="list" fileId={fileIds[virtualRow.index]} />
           </div>
         ))}
       </div>
