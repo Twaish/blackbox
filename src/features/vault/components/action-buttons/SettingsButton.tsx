@@ -15,7 +15,10 @@ export function SettingsButton({
   return (
     <Popover>
       <PopoverTrigger {...props} asChild>
-        <button className="no-drag hover:bg-secondary/50 h-full px-1">
+        <button
+          title="Settings"
+          className="no-drag hover:bg-secondary/50 h-full px-1"
+        >
           <Settings className="text-muted-foreground h-3.5 w-3.5" />
         </button>
       </PopoverTrigger>

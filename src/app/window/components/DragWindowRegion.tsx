@@ -34,7 +34,7 @@ export default function DragWindowRegion({
 function WindowButtons() {
   return (
     <div className="m-1 flex">
-      <WindowButton onClick={minimizeWindow}>
+      <WindowButton title="Minimize window" onClick={minimizeWindow}>
         <svg
           aria-hidden="true"
           role="img"
@@ -45,7 +45,7 @@ function WindowButtons() {
           <rect fill="currentColor" width="10" height="1" x="1" y="6"></rect>
         </svg>
       </WindowButton>
-      <WindowButton onClick={maximizeWindow}>
+      <WindowButton title="Maximize window" onClick={maximizeWindow}>
         <svg
           aria-hidden="true"
           role="img"
@@ -63,7 +63,7 @@ function WindowButtons() {
           ></rect>
         </svg>
       </WindowButton>
-      <WindowButton onClick={closeWindow}>
+      <WindowButton title="Close window" onClick={closeWindow}>
         <svg
           aria-hidden="true"
           role="img"
