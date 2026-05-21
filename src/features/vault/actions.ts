@@ -57,14 +57,7 @@ export function streamVaultFile({
       onSuccess() {
         if (signal?.aborted) return
         if (chunks) {
-          const totalLength = chunks.reduce((n, c) => n + c.length, 0)
-          const full = new Uint8Array(totalLength)
-          let offset = 0
-          for (const c of chunks) {
-            full.set(c, offset)
-            offset += c.length
-          }
-          onDone?.(new Blob([full]))
+          onDone?.(new Blob(chunks as BlobPart[]))
         }
       },
     },
