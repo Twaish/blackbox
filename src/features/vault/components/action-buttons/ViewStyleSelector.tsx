@@ -14,7 +14,7 @@ export function ViewStyleSelector() {
   const { mutate: setViewStyle } = useSetViewStyle()
   return (
     <Select value={viewStyle} onValueChange={setViewStyle}>
-      <SelectTrigger className="h-min rounded-none border-0 p-0 font-mono text-xs">
+      <SelectTrigger className="h-min max-h-min rounded-none border-0 p-0 font-mono text-xs">
         {viewStyle}
       </SelectTrigger>
       <SelectContent>
