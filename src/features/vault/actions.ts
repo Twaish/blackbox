@@ -1,5 +1,6 @@
 import { ipc } from '@/core/ipc'
 import { consumeEventIterator } from '@orpc/client'
+import { ipcRenderer } from 'electron'
 
 export async function addVaultFile(
   vaultId: string,
@@ -25,7 +26,7 @@ export async function readVaultFile(
   })
 }
 
-export function streamVaultFile({
+export async function streamVaultFile({
   vaultId,
   fileId,
   onDone,
@@ -39,38 +40,46 @@ export function streamVaultFile({
   onError?: (err: unknown) => void
   onChunk?: (chunk: Uint8Array) => void
   signal?: AbortSignal
-}): void {
-  const chunks: Uint8Array[] | null = onDone ? [] : null
-  const cancel = consumeEventIterator(
-    ipc.client.vaults.streamFile({ vaultId, fileId }),
-    {
-      onEvent(chunk) {
-        if (signal?.aborted) return
-        chunk = Uint8Array.from(Object.values(chunk))
-        chunks?.push(chunk)
-        onChunk?.(chunk)
-      },
-      onError(err) {
-        if ((err as Error)?.name === 'AbortError') return
-        onError?.(err)
-      },
-      onSuccess() {
-        if (signal?.aborted) return
-        if (chunks) {
-          onDone?.(new Blob(chunks as BlobPart[]))
-        }
-      },
+}): Promise<void> {
+  if (signal?.aborted) return
+
+  const chunks: Uint8Array[] = []
+
+  const stream = window.streams.streamVaultFile(vaultId, fileId, {
+    onChunk: (chunk) => {
+      if (signal?.aborted) return
+      onChunk?.(chunk)
+      if (onDone) chunks.push(chunk)
     },
-  )
+    onEnd: (err) => {
+      if (signal?.aborted) return
+
+      if (err) {
+        const e = new Error(err)
+        onError?.(e)
+        throw e
+      }
+
+      if (onDone) {
+        onDone(new Blob(chunks as BlobPart[]))
+      }
+    },
+  })
+
   if (signal) {
     if (signal.aborted) {
-      cancel()
+      stream.cancel()
     } else {
-      const onAbort = () => {
-        cancel()
-        signal.removeEventListener('abort', onAbort)
-      }
-      signal.addEventListener('abort', onAbort)
+      signal.addEventListener('abort', stream.cancel, { once: true })
+    }
+  }
+
+  try {
+    await stream.promise
+  } catch (err) {
+    if (!signal?.aborted) {
+      onError?.(err)
+      throw err
     }
   }
 }

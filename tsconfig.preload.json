@@ -3,8 +3,8 @@
   "compilerOptions": {
     "outDir": "./out/preload",
     "paths": {
-      "@/*": ["./electron/main/*"]
+      "@shared/*": ["./shared/*"]
     }
   },
-  "include": ["./electron/preload/preload.ts"]
+  "include": ["./electron/preload/preload.ts", "./shared"]
 }

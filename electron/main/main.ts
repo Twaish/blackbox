@@ -9,11 +9,13 @@ import { ElectronWindow } from './core/ElectronWindow'
 import { Modules } from './helpers/ipc/types'
 import { createOrpcRouter } from './helpers/ipc/create-orpc-router'
 import { registerOrpcHandler } from './helpers/ipc/register-orpc-handler'
+import { registerStreamHandlers } from './helpers/ipc/register-stream-handlers'
 import { createCryptoServices } from './helpers/create-crypto-services'
 
 import { SettingsBuilder } from './app/settings/infrastructure/adapters/SettingsBuilder'
 import { SettingsRegistry } from './app/settings/infrastructure/adapters/SettingsRegistry'
 import { VaultManager } from './features/vault/adapters/VaultManager'
+
 app.commandLine.appendSwitch('trace-warnings')
 app.whenReady().then(async () => {
   const userData = app.getPath('userData')
@@ -59,6 +61,7 @@ app.whenReady().then(async () => {
     await vaultManager.init()
 
     registerOrpcHandler(createOrpcRouter(modules))
+    registerStreamHandlers(modules)
 
     mainWindow.loadUrl(APP_URL)
     mainWindow.showWindow()
