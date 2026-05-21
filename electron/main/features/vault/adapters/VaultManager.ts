@@ -26,7 +26,7 @@ import {
 import path from 'node:path'
 import { fileTypeFromBuffer } from 'file-type'
 import mime from 'mime-types'
-import { open, stat } from 'node:fs/promises'
+import { open } from 'node:fs/promises'
 
 const ALGO = 'aes-256-gcm'
 
@@ -172,48 +172,51 @@ export class VaultManager implements IVaultManager {
     const session = this.getSession(vaultId)
     const filePath = this.getVaultFilePath(vaultId, fileId)
 
-    const statResult = await stat(filePath)
     const fd = await open(filePath, 'r')
 
     let encryptedStream: ReadStream | undefined
+    let closed = false
 
     const closeStream = async () => {
+      if (closed) return
+      closed = true
       encryptedStream?.destroy()
-      await fd.close()
+      await fd.close().catch(() => {})
     }
 
     try {
-      const iv = Buffer.alloc(12)
-      await fd.read(iv, 0, 12, 0)
+      const { size } = await fd.stat()
 
-      const tag = Buffer.alloc(16)
-      await fd.read(tag, 0, 16, statResult.size - 16)
+      if (size < 28) throw new Error('Invalid encrypted file')
+
+      const iv = Buffer.allocUnsafe(12)
+      const tag = Buffer.allocUnsafe(16)
+
+      await Promise.all([fd.read(iv, 0, 12, 0), fd.read(tag, 0, 16, size - 16)])
 
       const decipher = createDecipheriv(ALGO, session.key, iv)
       decipher.setAuthTag(tag)
 
-      const encryptedStream = createReadStream(filePath, {
+      encryptedStream = createReadStream(filePath, {
+        fd: fd,
+        autoClose: false,
         start: 12,
-        end: statResult.size - 17,
+        end: size - 17,
         highWaterMark: 64 * 1024,
         signal,
       })
 
       encryptedStream.on('error', async function (err) {
-        if ((err as Error).name !== 'AbortError') throw err
+        if ((err as Error).name !== 'AbortError') return
         await closeStream()
-        console.warn(`Streaming of file ${fileId} aborted`)
-        return
       })
 
       const decryptedStream = encryptedStream.pipe(decipher)
 
       for await (const chunk of decryptedStream) {
         if (signal?.aborted) break
-        yield new Uint8Array(chunk)
+        yield chunk
       }
-    } catch (err) {
-      console.error(`Error streaming file ${fileId}: `, err)
     } finally {
       await closeStream()
     }
