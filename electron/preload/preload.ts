@@ -1,4 +1,3 @@
-import { VaultStreamHandle } from '@shared/types'
 import { ipcRenderer, contextBridge, IpcRendererEvent } from 'electron'
 
 window.addEventListener('message', (event) => {
@@ -9,68 +8,75 @@ window.addEventListener('message', (event) => {
   }
 })
 
+type StreamState = {
+  onChunk: (chunk: Uint8Array) => void
+  onEnd: (err?: string) => void
+  resolve: () => void
+  reject: (err: Error) => void
+}
+const streams = new Map<string, StreamState>()
+
+ipcRenderer.on(
+  'stream:chunk',
+  (_: IpcRendererEvent, id: string, chunk: Uint8Array) => {
+    streams.get(id)?.onChunk(chunk)
+  },
+)
+
+ipcRenderer.on(
+  'stream:end',
+  (_: IpcRendererEvent, id: string, err?: string) => {
+    const stream = streams.get(id)
+    if (!stream) return
+
+    stream.onEnd(err)
+    if (err) {
+      stream.reject(new Error(err))
+    } else {
+      stream.resolve()
+    }
+    streams.delete(id)
+  },
+)
+
+function streamVaultFile(
+  vaultId: string,
+  fileId: string,
+  handlers: {
+    onChunk?: (chunk: Uint8Array) => void
+    onEnd?: (err?: string) => void
+  } = {},
+) {
+  const streamId = crypto.randomUUID()
+
+  let resolve!: () => void
+  let reject!: (err: Error) => void
+
+  const promise = new Promise<void>((res, rej) => {
+    resolve = res
+    reject = rej
+  })
+
+  streams.set(streamId, {
+    onChunk: handlers.onChunk ?? (() => {}),
+    onEnd: handlers.onEnd ?? (() => {}),
+    resolve,
+    reject,
+  })
+
+  ipcRenderer.send('stream:start', { streamId, vaultId, fileId })
+
+  return {
+    cancel: () => ipcRenderer.send('stream:abort', streamId),
+    promise,
+  }
+}
+
+function abortStream(streamId: string) {
+  ipcRenderer.send('stream:abort', streamId)
+}
+
 contextBridge.exposeInMainWorld('streams', {
-  streamVaultFile: (
-    vaultId: string,
-    fileId: string,
-    handlers: {
-      onChunk?: (chunk: Uint8Array) => void
-      onEnd?: (err?: string) => void
-    } = {},
-  ): VaultStreamHandle => {
-    const streamId = crypto.randomUUID()
-
-    let resolvePromise!: () => void
-    let rejectPromise!: (err: unknown) => void
-
-    const promise = new Promise<void>((resolve, reject) => {
-      resolvePromise = resolve
-      rejectPromise = reject
-    })
-
-    const cleanup = () => {
-      ipcRenderer.off('stream:chunk', handleChunk)
-      ipcRenderer.off('stream:end', handleEnd)
-    }
-
-    const handleChunk = (
-      _: IpcRendererEvent,
-      id: string,
-      chunk: Uint8Array,
-    ) => {
-      if (id !== streamId) return
-      handlers.onChunk?.(chunk)
-    }
-
-    const handleEnd = (_: IpcRendererEvent, id: string, err?: string) => {
-      if (id !== streamId) return
-      cleanup()
-
-      if (err) {
-        handlers.onEnd?.(err)
-        rejectPromise(new Error(err))
-      } else {
-        handlers.onEnd?.()
-        resolvePromise()
-      }
-    }
-
-    ipcRenderer.on('stream:chunk', handleChunk)
-    ipcRenderer.on('stream:end', handleEnd)
-
-    ipcRenderer.send('stream:start', { streamId, vaultId, fileId })
-
-    return {
-      cancel: () => {
-        cleanup()
-        ipcRenderer.send('stream:abort', streamId)
-        resolvePromise
-      },
-      promise,
-    }
-  },
-
-  abortStream: (streamId: string): void => {
-    ipcRenderer.send('stream:abort', streamId)
-  },
+  streamVaultFile,
+  abortStream,
 })
