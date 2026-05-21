@@ -158,26 +158,29 @@ VaultSelector.Items = function Items() {
   }, [vaults, query])
 
   return (
-    <div className="hide-scroll h-full max-h-40 w-full overflow-auto">
-      {isLoading ? (
-        <div>Loading...</div>
-      ) : (
-        <>
-          {filteredVaults.length ? (
-            filteredVaults.map((vaultEntry) => (
-              <VaultItem
-                key={vaultEntry.id}
-                vault={vaultEntry}
-                onClick={() => handleVaultChange(vaultEntry)}
-              />
-            ))
-          ) : (
-            <div className="text-muted-foreground flex items-center justify-center px-2 py-12 text-xs">
-              No vaults found
-            </div>
-          )}
-        </>
-      )}
+    <div className="relative h-full w-full overflow-hidden">
+      <div className="hide-scroll h-full max-h-50 w-full overflow-auto pb-10">
+        {isLoading ? (
+          <div>Loading...</div>
+        ) : (
+          <>
+            {filteredVaults.length ? (
+              filteredVaults.map((vaultEntry) => (
+                <VaultItem
+                  key={vaultEntry.id}
+                  vault={vaultEntry}
+                  onClick={() => handleVaultChange(vaultEntry)}
+                />
+              ))
+            ) : (
+              <div className="text-muted-foreground flex items-center justify-center px-2 py-12 text-xs">
+                No vaults found
+              </div>
+            )}
+          </>
+        )}
+      </div>
+      <div className="from-background via-background/90 pointer-events-none absolute right-0 bottom-0 left-0 h-12 bg-linear-to-t via-40% to-transparent" />
     </div>
   )
 }
