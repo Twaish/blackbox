@@ -5,6 +5,7 @@ import { getVaultFilesQueryOptions } from '../../queries'
 import { useVaultFiles, useVaultFilesStore } from '../VaultFiles'
 import { EmptyFileView } from './EmptyFileView'
 import { VaultFile } from './VaultFile'
+import { cn } from '@/utils/tailwind'
 
 const LIST_ITEM_HEIGHT = 48
 const GAP = 1
@@ -26,31 +27,39 @@ export function FileListView() {
     overscan: 10,
   })
 
-  if (!fileIds.length) {
-    return <EmptyFileView />
-  }
+  const hasFiles = fileIds.length
 
   return (
-    <div ref={parentRef} className="h-full overflow-auto p-px pb-50">
-      <div
-        className="relative w-full"
-        style={{
-          height: rowVirtualizer.getTotalSize(),
-        }}
-      >
-        {rowVirtualizer.getVirtualItems().map((virtualRow) => (
-          <div
-            key={virtualRow.key}
-            className="absolute top-0 left-0 w-full"
-            style={{
-              height: virtualRow.size,
-              transform: `translateY(${virtualRow.start}px)`,
-            }}
-          >
-            <VaultFile viewStyle="list" fileId={fileIds[virtualRow.index]} />
-          </div>
-        ))}
-      </div>
+    <div
+      ref={parentRef}
+      className={cn(
+        'h-full overflow-auto p-px',
+        hasFiles ? 'pb-50' : 'overflow-hidden',
+      )}
+    >
+      {!hasFiles ? (
+        <EmptyFileView />
+      ) : (
+        <div
+          className="relative w-full"
+          style={{
+            height: rowVirtualizer.getTotalSize(),
+          }}
+        >
+          {rowVirtualizer.getVirtualItems().map((virtualRow) => (
+            <div
+              key={virtualRow.key}
+              className="absolute top-0 left-0 w-full"
+              style={{
+                height: virtualRow.size,
+                transform: `translateY(${virtualRow.start}px)`,
+              }}
+            >
+              <VaultFile viewStyle="list" fileId={fileIds[virtualRow.index]} />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
