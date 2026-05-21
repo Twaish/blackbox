@@ -35,7 +35,7 @@ function evictIfNeeded() {
   }
 }
 
-export function getCachedPreview(fileId: string) {
+function getCachedPreview(fileId: string) {
   const cached = previewCache.get(fileId)
   if (cached) {
     touch(fileId)
@@ -44,7 +44,7 @@ export function getCachedPreview(fileId: string) {
   return null
 }
 
-export function setCachedPreview(fileId: string, url: string) {
+function setCachedPreview(fileId: string, url: string) {
   previewCache.set(fileId, {
     url,
     lastAccess: Date.now(),
