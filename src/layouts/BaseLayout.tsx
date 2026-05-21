@@ -20,7 +20,7 @@ export default function BaseLayout({ children }: { children: ReactNode }) {
         <VaultSelector />
         <SettingsButton />
       </DragWindowRegion>
-      <main className="relative h-full w-full">
+      <main className="relative h-full w-full overflow-hidden">
         <Suspense>{children}</Suspense>
       </main>
     </div>

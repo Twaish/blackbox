@@ -56,6 +56,7 @@
     "@orpc/server": "^1.13.13",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-query": "^5.99.0",
+    "@tanstack/react-virtual": "^3.13.24",
     "@vitejs/plugin-react": "^4.4.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
