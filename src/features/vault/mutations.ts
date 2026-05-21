@@ -7,9 +7,11 @@ import {
   deleteVaultFile,
   removeSession,
   setShouldPreview,
+  setViewStyle,
   toggleShouldPreview,
   unlinkVault,
   unlockVault,
+  ViewStyle,
 } from './actions'
 import { queryClient } from '@/core/queryClient'
 import { queryKeys } from './queries'
@@ -104,5 +106,13 @@ export const useToggleShouldPreview = () =>
     mutationFn: () => toggleShouldPreview(),
     onSuccess: (enabled) => {
       queryClient.setQueryData(queryKeys.shouldPreview(), enabled)
+    },
+  })
+
+export const useSetViewStyle = () =>
+  useMutation({
+    mutationFn: (viewStyle: ViewStyle) => setViewStyle(viewStyle),
+    onSuccess: (viewStyle) => {
+      queryClient.setQueryData(queryKeys.viewStyle(), viewStyle)
     },
   })

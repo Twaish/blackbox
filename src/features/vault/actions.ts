@@ -188,15 +188,28 @@ export async function getShouldPreview(): Promise<boolean> {
   const value = localStorage.getItem('should-preview')
   return value === 'true'
 }
-
 export async function setShouldPreview(enabled: boolean): Promise<boolean> {
   localStorage.setItem('should-preview', String(enabled))
   return enabled
 }
-
 export async function toggleShouldPreview(): Promise<boolean> {
   const current = await getShouldPreview()
   const next = !current
   localStorage.setItem('should-preview', String(next))
   return next
+}
+
+export const VIEW_STYLES = ['grid', 'list'] as const
+export type ViewStyle = (typeof VIEW_STYLES)[number]
+function isViewStyle(value: unknown): value is ViewStyle {
+  return typeof value === 'string' && VIEW_STYLES.includes(value as ViewStyle)
+}
+export async function getViewStyle(): Promise<ViewStyle> {
+  const value = localStorage.getItem('view-style')
+  if (isViewStyle(value)) return value
+  return 'grid'
+}
+export async function setViewStyle(viewStyle: ViewStyle) {
+  localStorage.setItem('view-style', viewStyle)
+  return viewStyle
 }

@@ -7,6 +7,7 @@ import { Settings } from 'lucide-react'
 import { ComponentProps } from 'react'
 import { PreviewToggle } from '../ui/PreviewToggle'
 import { cn } from '@/utils/tailwind'
+import { ViewStyleSelector } from './ViewStyleSelector'
 
 export function SettingsButton({
   ...props
@@ -20,10 +21,13 @@ export function SettingsButton({
       </PopoverTrigger>
       <PopoverContent
         align={'end'}
-        className="flex min-w-80 flex-col gap-0 p-2"
+        className="flex min-w-80 flex-col gap-1 p-2"
       >
         <Setting title="Previews" description="Toggle previews of file content">
           <PreviewToggle />
+        </Setting>
+        <Setting title="View Style" description="Style of file view">
+          <ViewStyleSelector />
         </Setting>
       </PopoverContent>
     </Popover>

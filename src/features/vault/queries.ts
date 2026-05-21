@@ -3,6 +3,7 @@ import {
   getShouldPreview,
   getVaultFiles,
   getVaults,
+  getViewStyle,
   hasSession,
   readVaultFile,
   readVaultFileMeta,
@@ -26,6 +27,7 @@ export const queryKeys = {
   // Settings
   settings: () => ['settings'],
   shouldPreview: () => [...queryKeys.settings(), 'should-preview'],
+  viewStyle: () => [...queryKeys.settings(), 'view-style'],
 }
 
 export const readVaultFileQueryOptions = (vaultId: string, fileId: string) =>
@@ -65,5 +67,12 @@ export const shouldPreviewQueryOptions = () =>
   queryOptions({
     queryKey: queryKeys.shouldPreview(),
     queryFn: () => getShouldPreview(),
+    staleTime: Infinity,
+  })
+
+export const viewStyleQueryOptions = () =>
+  queryOptions({
+    queryKey: queryKeys.viewStyle(),
+    queryFn: () => getViewStyle(),
     staleTime: Infinity,
   })
