@@ -15,6 +15,13 @@ import { createCryptoServices } from './helpers/create-crypto-services'
 import { SettingsBuilder } from './app/settings/infrastructure/adapters/SettingsBuilder'
 import { SettingsRegistry } from './app/settings/infrastructure/adapters/SettingsRegistry'
 import { VaultManager } from './features/vault/adapters/VaultManager'
+import { VaultRegistry } from './features/vault/adapters/VaultRegistry'
+import { SessionStore } from './features/vault/adapters/SessionStore'
+import { VaultFileStore } from './features/vault/adapters/VaultFileStore'
+import { UploadStore } from './features/vault/adapters/UploadStore'
+import { EncryptedJsonStore } from './features/vault/adapters/EncryptedJsonStore'
+import { VaultCrypto } from './features/vault/adapters/VaultCrypto'
+import { VaultPaths } from './features/vault/adapters/VaultPaths'
 
 app.commandLine.appendSwitch('trace-warnings')
 app.whenReady().then(async () => {
@@ -40,7 +47,32 @@ app.whenReady().then(async () => {
       settingsRegistry,
     )
 
-    const vaultManager = new VaultManager(settingsBuilder)
+    const vaultPaths = new VaultPaths()
+    const vaultCrypto = new VaultCrypto()
+    const sessionStore = new SessionStore()
+
+    const encryptedJsonStore = new EncryptedJsonStore(vaultCrypto)
+    const vaultFileStore = new VaultFileStore(
+      encryptedJsonStore,
+      vaultCrypto,
+      vaultPaths,
+    )
+    const uploadStore = new UploadStore(
+      encryptedJsonStore,
+      vaultCrypto,
+      vaultPaths,
+      vaultFileStore,
+    )
+
+    const vaultRegistry = new VaultRegistry(settingsBuilder, vaultPaths)
+    const vaultManager = new VaultManager(
+      vaultRegistry,
+      sessionStore,
+      vaultFileStore,
+      uploadStore,
+      vaultCrypto,
+      vaultPaths,
+    )
 
     const mainWindow = new ElectronWindow()
     const modules: Modules = {
@@ -58,7 +90,7 @@ app.whenReady().then(async () => {
       await settingsRegistry.flushAll()
     })
 
-    await vaultManager.init()
+    await vaultRegistry.init()
 
     registerOrpcHandler(createOrpcRouter(modules))
     registerStreamHandlers(modules)

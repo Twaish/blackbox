@@ -1,98 +1,24 @@
-import {
-  ISettingsBuilder,
-  Schema,
-  SettingsInterface,
-} from '@/app/settings/application/ports/ISettingsBuilder'
-import {
-  randomUUID,
-  randomBytes,
-  scryptSync,
-  createCipheriv,
-  createDecipheriv,
-  CipherGCM,
-} from 'node:crypto'
-import { mkdirSync, writeFileSync } from 'fs'
+import { randomUUID, randomBytes, createDecipheriv } from 'node:crypto'
 import { join } from 'path'
-import {
-  createReadStream,
-  createWriteStream,
-  existsSync,
-  readdirSync,
-  readFileSync,
-  ReadStream,
-  unlinkSync,
-  WriteStream,
-} from 'node:fs'
-import path from 'node:path'
-import { fileTypeFromBuffer } from 'file-type'
-import mime from 'mime-types'
-import { open } from 'node:fs/promises'
+import { mkdir, writeFile } from 'node:fs/promises'
+import { VaultPaths } from './VaultPaths'
+import { VaultCrypto } from './VaultCrypto'
+import { VaultRegistry } from './VaultRegistry'
+import { SessionStore } from './SessionStore'
+import { VaultFileStore } from './VaultFileStore'
+import { UploadStore } from './UploadStore'
 
 const ALGO = 'aes-256-gcm'
 
-function deriveKey(passphrase: string, salt: Buffer) {
-  return scryptSync(passphrase, salt, 32)
-}
-
-function encrypt(data: Buffer, key: Buffer) {
-  const iv = randomBytes(12)
-  const cipher = createCipheriv(ALGO, key, iv)
-
-  const encrypted = Buffer.concat([cipher.update(data), cipher.final()])
-  const tag = cipher.getAuthTag()
-
-  return Buffer.concat([iv, encrypted, tag])
-}
-
-function decrypt(buffer: Buffer, key: Buffer) {
-  const iv = buffer.subarray(0, 12)
-  const tag = buffer.subarray(buffer.length - 16)
-  const data = buffer.subarray(12, buffer.length - 16)
-
-  const decipher = createDecipheriv(ALGO, key, iv)
-  decipher.setAuthTag(tag)
-
-  return Buffer.concat([decipher.update(data), decipher.final()])
-}
-
-const settingsSchema = {
-  vaults: { default: [] as VaultEntry[] },
-} satisfies Schema
-
-type VaultSession = {
-  vaultId: string
-  key: Buffer
-  unlockedAt: number
-}
-
-type UploadSession = {
-  uploadId: string
-  vaultId: string
-  fileId: string
-  stream: WriteStream
-  cipher: CipherGCM
-  iv: Buffer
-  name: string
-  mime: string
-}
-
 export class VaultManager implements IVaultManager {
-  private settings: SettingsInterface<typeof settingsSchema>
-  private sessions = new Map<string, VaultSession>()
-
-  private uploads = new Map<string, UploadSession>()
-
-  constructor(builder: ISettingsBuilder) {
-    this.settings = builder.defineSettings(
-      'vaults',
-      'vaults-settings',
-      settingsSchema,
-    )
-  }
-
-  async init() {
-    await this.settings.init()
-  }
+  constructor(
+    private registry: VaultRegistry,
+    private sessions: SessionStore,
+    private files: VaultFileStore,
+    private uploads: UploadStore,
+    private crypto: VaultCrypto,
+    private paths: VaultPaths,
+  ) {}
 
   async addFile({
     vaultId,
@@ -101,63 +27,33 @@ export class VaultManager implements IVaultManager {
     vaultId: string
     filepath: string
   }): Promise<string> {
-    const session = this.getSession(vaultId)
-    const fileBuffer = readFileSync(filepath)
-    const fileId = randomUUID()
-    const encryptedFile = encrypt(fileBuffer, session.key)
-    const encryptedFilepath = this.getVaultFilePath(vaultId, fileId)
-    writeFileSync(encryptedFilepath, encryptedFile)
-
-    const mimeFromLookup = mime.lookup(filepath)
-    const inferredMime =
-      (await fileTypeFromBuffer(fileBuffer))?.mime ??
-      (typeof mimeFromLookup === 'string' ? mimeFromLookup : undefined) ??
-      'application/octet-stream'
-
-    const metadata: VaultFileMeta = {
-      fileId,
-      original: {
-        name: path.basename(filepath),
-        ext: path.extname(filepath),
-        mime: inferredMime,
-      },
-    }
-
-    const encryptedMeta = encrypt(
-      Buffer.from(JSON.stringify(metadata), 'utf-8'),
-      session.key,
-    )
-
-    writeFileSync(this.getVaultMetaPath(vaultId, fileId), encryptedMeta)
-
-    return fileId
+    const vault = this.registry.get(vaultId)
+    const session = this.sessions.get(vaultId)
+    return this.files.add(vault, session.key, filepath)
   }
 
-  deleteFile({ vaultId, fileId }: { vaultId: string; fileId: string }): void {
-    const filePath = this.getVaultFilePath(vaultId, fileId)
-    const metaPath = this.getVaultMetaPath(vaultId, fileId)
-
-    try {
-      if (existsSync(filePath)) {
-        unlinkSync(filePath)
-      }
-    } catch (err) {
-      console.error(err)
-    }
-
-    try {
-      if (existsSync(metaPath)) {
-        unlinkSync(metaPath)
-      }
-    } catch (err) {
-      console.error(err)
-    }
+  async readFile({
+    vaultId,
+    fileId,
+  }: {
+    vaultId: string
+    fileId: string
+  }): Promise<Buffer> {
+    const vault = this.registry.get(vaultId)
+    const session = this.sessions.get(vaultId)
+    return this.files.read(vault, session.key, fileId)
   }
 
-  readFile({ vaultId, fileId }: { vaultId: string; fileId: string }): Buffer {
-    const session = this.getSession(vaultId)
-    const encryptedFile = readFileSync(this.getVaultFilePath(vaultId, fileId))
-    return decrypt(encryptedFile, session.key)
+  async readMeta({
+    vaultId,
+    fileId,
+  }: {
+    vaultId: string
+    fileId: string
+  }): Promise<VaultFileMeta> {
+    const vault = this.registry.get(vaultId)
+    const session = this.sessions.get(vaultId)
+    return this.files.readMeta(vault, session.key, fileId)
   }
 
   async *streamFile({
@@ -169,177 +65,16 @@ export class VaultManager implements IVaultManager {
     fileId: string
     signal?: AbortSignal
   }): AsyncGenerator<Uint8Array> {
-    const session = this.getSession(vaultId)
-    const filePath = this.getVaultFilePath(vaultId, fileId)
-
-    const fd = await open(filePath, 'r')
-
-    let encryptedStream: ReadStream | undefined
-    let closed = false
-
-    const closeStream = async () => {
-      if (closed) return
-      closed = true
-      encryptedStream?.destroy()
-      await fd.close().catch(() => {})
-    }
-
-    try {
-      const { size } = await fd.stat()
-
-      if (size < 28) throw new Error('Invalid encrypted file')
-
-      const iv = Buffer.allocUnsafe(12)
-      const tag = Buffer.allocUnsafe(16)
-
-      await Promise.all([fd.read(iv, 0, 12, 0), fd.read(tag, 0, 16, size - 16)])
-
-      const decipher = createDecipheriv(ALGO, session.key, iv)
-      decipher.setAuthTag(tag)
-
-      encryptedStream = createReadStream(filePath, {
-        fd: fd,
-        autoClose: false,
-        start: 12,
-        end: size - 17,
-        highWaterMark: 64 * 1024,
-        signal,
-      })
-
-      encryptedStream.on('error', async function (err) {
-        if ((err as Error).name !== 'AbortError') return
-        await closeStream()
-      })
-
-      const decryptedStream = encryptedStream.pipe(decipher)
-
-      for await (const chunk of decryptedStream) {
-        if (signal?.aborted) break
-        yield chunk
-      }
-    } finally {
-      await closeStream()
+    const vault = this.registry.get(vaultId)
+    const session = this.sessions.get(vaultId)
+    const stream = this.files.stream(vault, session.key, fileId, signal)
+    for await (const chunk of stream) {
+      if (signal?.aborted) break
+      yield chunk
     }
   }
 
-  readMeta({
-    vaultId,
-    fileId,
-  }: {
-    vaultId: string
-    fileId: string
-  }): VaultFileMeta {
-    const session = this.getSession(vaultId)
-    const encryptedMeta = readFileSync(this.getVaultMetaPath(vaultId, fileId))
-    const decryptedMeta = decrypt(encryptedMeta, session.key)
-    return JSON.parse(decryptedMeta.toString('utf-8'))
-  }
-
-  createVault({
-    location,
-    name,
-    passphrase,
-  }: {
-    location: string
-    name: string
-    algorithm: string
-    passphrase: string
-  }): void {
-    try {
-      const vaultId = randomUUID()
-      const vaultName = name
-
-      const vaultPath = join(location, vaultName)
-
-      mkdirSync(vaultPath, { recursive: true })
-      mkdirSync(join(vaultPath, 'data'))
-      mkdirSync(join(vaultPath, 'meta'))
-
-      const salt = randomBytes(16)
-      const key = deriveKey(passphrase, salt)
-
-      const checkIv = randomBytes(12)
-      const checkCipher = createCipheriv(ALGO, key, checkIv)
-
-      const checkPlain = Buffer.from('vault-check', 'utf8')
-
-      const checkEncrypted = Buffer.concat([
-        checkCipher.update(checkPlain),
-        checkCipher.final(),
-      ])
-
-      const checkTag = checkCipher.getAuthTag()
-
-      const manifest: VaultManifest = {
-        id: vaultId,
-        name: vaultName,
-        crypto: {
-          salt: salt.toString('base64'),
-          kdf: 'scrypt',
-          algorithm: ALGO,
-          keyCheck: {
-            iv: checkIv.toString('base64'),
-            data: checkEncrypted.toString('base64'),
-            tag: checkTag.toString('base64'),
-          },
-        },
-      }
-
-      const manifestPath = join(vaultPath, 'manifest.json')
-      writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8')
-
-      this.settings.vaults = [
-        ...this.settings.vaults,
-        {
-          id: vaultId,
-          name: vaultName,
-          location: vaultPath,
-        },
-      ]
-    } catch (err) {
-      console.error(err)
-    }
-  }
-
-  unlockVault({
-    vaultId,
-    passphrase,
-  }: {
-    vaultId: string
-    passphrase: string
-  }): void {
-    const key = this.getVerifiedKey(vaultId, passphrase)
-
-    this.sessions.set(vaultId, {
-      vaultId,
-      key,
-      unlockedAt: Date.now(),
-    })
-  }
-
-  getVaults() {
-    return this.settings.vaults
-  }
-
-  addExistingVault(vaultPath: string): void {
-    const manifest = this.getManifest(vaultPath)
-    const exists = this.settings.vaults.find((v) => v.id === manifest.id)
-    if (exists)
-      throw new Error(
-        `Vault "${manifest.name}" with id ${manifest.id} already exists`,
-      )
-
-    this.settings.vaults = [
-      ...this.settings.vaults,
-      {
-        id: manifest.id,
-        name: manifest.name,
-        location: vaultPath,
-      },
-    ]
-  }
-
-  restoreFile({
+  async restoreFile({
     vaultId,
     fileId,
     outputFilepath,
@@ -347,14 +82,80 @@ export class VaultManager implements IVaultManager {
     vaultId: string
     fileId: string
     outputFilepath: string
-  }) {
-    const fileBuffer = this.readFile({ vaultId, fileId })
-    writeFileSync(outputFilepath, fileBuffer)
+  }): Promise<void> {
+    const fileBuffer = await this.readFile({ vaultId, fileId })
+    await writeFile(outputFilepath, fileBuffer)
+  }
+
+  deleteFile({ vaultId, fileId }: { vaultId: string; fileId: string }): void {
+    const vault = this.registry.get(vaultId)
+    this.files.delete(vault, fileId)
+  }
+
+  async createVault({
+    location,
+    name,
+    passphrase,
+  }: {
+    location: string
+    name: string
+    passphrase: string
+  }): Promise<void> {
+    const vaultPath = join(location, name)
+
+    await mkdir(vaultPath, { recursive: true })
+    await Promise.all([
+      mkdir(this.paths.data(vaultPath)),
+      mkdir(this.paths.meta(vaultPath)),
+    ])
+
+    const salt = randomBytes(16)
+    const key = this.crypto.deriveKey(passphrase, salt)
+    const keyCheck = this.createKeyCheck(key)
+
+    const id = randomUUID()
+    const manifest: VaultManifest = {
+      id,
+      name,
+      crypto: {
+        salt: salt.toString('base64'),
+        keyCheck,
+      },
+    }
+
+    await writeFile(
+      this.paths.manifest(vaultPath),
+      JSON.stringify(manifest, null, 2),
+      'utf-8',
+    )
+
+    this.registry.add({ id, name, location: vaultPath })
+  }
+
+  async unlockVault({
+    vaultId,
+    passphrase,
+  }: {
+    vaultId: string
+    passphrase: string
+  }): Promise<void> {
+    const key = await this.getVerifiedKey(vaultId, passphrase)
+    this.sessions.set(vaultId, key)
+  }
+
+  async addExistingVault(location: string): Promise<void> {
+    const { id, name } = (await this.registry.getManifest(location)) ?? {}
+    if (this.registry.has(id))
+      throw new Error(`Vault "${name}" with id ${id} already exists`)
+    this.registry.add({ id, name, location })
+  }
+
+  getVaults() {
+    return this.registry.getAll()
   }
 
   getVaultFiles(vaultId: string): string[] {
-    const files = readdirSync(this.getVaultFilePath(vaultId))
-    return files.map((file) => path.parse(file).name)
+    return this.files.list(this.registry.get(vaultId))
   }
 
   hasSession(vaultId: string): boolean {
@@ -362,11 +163,11 @@ export class VaultManager implements IVaultManager {
   }
 
   removeSession(vaultId: string): void {
-    this.sessions.delete(vaultId)
+    this.sessions.remove(vaultId)
   }
 
   unlinkVault(id: string): void {
-    this.settings.vaults = this.settings.vaults.filter((v) => v.id !== id)
+    this.registry.remove(id)
   }
 
   async startUpload({
@@ -378,147 +179,54 @@ export class VaultManager implements IVaultManager {
     name: string
     mime: string
   }): Promise<string> {
-    const session = this.getSession(vaultId)
-
-    const uploadId = randomUUID()
-    const fileId = randomUUID()
-
-    const encryptedPath = this.getVaultFilePath(vaultId, fileId)
-
-    const iv = randomBytes(12)
-
-    const cipher = createCipheriv(ALGO, session.key, iv)
-
-    const stream = createWriteStream(encryptedPath)
-
-    await new Promise<void>((resolve, reject) => {
-      stream.write(iv, (err) => {
-        if (err) reject(err)
-        else resolve()
-      })
-    })
-
-    this.uploads.set(uploadId, {
-      uploadId,
-      vaultId,
-      fileId,
-      stream,
-      cipher,
-      iv,
-      name,
-      mime,
-    })
-
-    return uploadId
+    const vault = this.registry.get(vaultId)
+    const session = this.sessions.get(vaultId)
+    return await this.uploads.start(vault, session.key, name, mime)
   }
 
   async uploadChunk({
-    uploadId,
+    streamId,
     chunk,
   }: {
-    uploadId: string
+    streamId: string
     chunk: ArrayBuffer
   }): Promise<void> {
-    const upload = this.uploads.get(uploadId)
-
-    if (!upload) {
-      throw new Error('Upload session not found')
-    }
-
-    const buffer = Buffer.from(chunk)
-    const encrypted = upload.cipher.update(buffer)
-
-    return await new Promise<void>((resolve, reject) => {
-      upload.stream.write(encrypted, (err) => {
-        if (err) reject(err)
-        else resolve()
-      })
-    })
+    await this.uploads.chunk(streamId, chunk)
   }
 
-  async finishUpload({ uploadId }: { uploadId: string }): Promise<string> {
-    const upload = this.uploads.get(uploadId)
-    if (!upload) throw new Error('Upload session not found')
-
-    const final = upload.cipher.final()
-    const tag = upload.cipher.getAuthTag()
-
-    await new Promise<void>((resolve, reject) => {
-      upload.stream.write(final, (err) => {
-        if (err) reject(err)
-        else resolve()
-      })
-    })
-
-    // append auth tag after ciphertext
-    await new Promise<void>((resolve, reject) => {
-      upload.stream.write(tag, (err) => {
-        if (err) reject(err)
-        else resolve()
-      })
-    })
-
-    await new Promise<void>((resolve) => {
-      upload.stream.end(resolve)
-    })
-
-    const metadata: VaultFileMeta = {
-      fileId: upload.fileId,
-      original: {
-        name: upload.name,
-        ext: path.extname(upload.name),
-        mime: upload.mime || 'application/octet-stream',
-      },
-    }
-
-    const session = this.getSession(upload.vaultId)
-
-    const encryptedMeta = encrypt(
-      Buffer.from(JSON.stringify(metadata), 'utf8'),
-      session.key,
-    )
-
-    writeFileSync(
-      this.getVaultMetaPath(upload.vaultId, upload.fileId),
-      encryptedMeta,
-    )
-
-    this.uploads.delete(uploadId)
-
-    return upload.fileId
+  async finishUpload({ streamId }: { streamId: string }): Promise<string> {
+    const upload = this.uploads.get(streamId)
+    const vault = this.registry.get(upload.vaultId)
+    const session = this.sessions.get(upload.vaultId)
+    return await this.uploads.finish(streamId, vault, session.key)
   }
 
-  private getVaultFilePath(vaultId: string, fileId?: string): string {
-    const vault = this.getVault(vaultId)
+  async abortUpload({ streamId }: { streamId: string }): Promise<void> {
+    const upload = this.uploads.get(streamId)
+    const vault = this.registry.get(upload.vaultId)
+    this.uploads.abort(streamId, vault)
+  }
 
-    if (fileId) {
-      return path.join(vault.location, 'data', `${fileId}.enc`)
-    } else {
-      return path.join(vault.location, 'data')
+  private createKeyCheck(key: Buffer): VaultManifest['crypto']['keyCheck'] {
+    const { iv, cipher } = this.crypto.createEncryptionStream(key)
+    const plain = Buffer.from('vault-check', 'utf8')
+    const data = Buffer.concat([cipher.update(plain), cipher.final()])
+    return {
+      iv: iv.toString('base64'),
+      data: data.toString('base64'),
+      tag: cipher.getAuthTag().toString('base64'),
     }
   }
 
-  private getVaultMetaPath(vaultId: string, fileId: string): string {
-    const vault = this.getVault(vaultId)
-
-    return path.join(vault.location, 'meta', `${fileId}.enc`)
-  }
-
-  private getVault(vaultId: string): VaultEntry {
-    const vault = this.settings.vaults.find((v) => v.id === vaultId)
-    if (!vault) {
-      throw new Error('Vault not found')
-    }
-    return vault
-  }
-
-  private getVerifiedKey(vaultId: string, passphrase: string): Buffer {
-    const vault = this.getVault(vaultId)
-    const manifest = this.getManifest(vault.location)
+  private async getVerifiedKey(
+    vaultId: string,
+    passphrase: string,
+  ): Promise<Buffer> {
+    const vault = this.registry.get(vaultId)
+    const manifest = await this.registry.getManifest(vault.location)
 
     const salt = Buffer.from(manifest.crypto.salt, 'base64')
-    const key = deriveKey(passphrase, salt)
-
+    const key = this.crypto.deriveKey(passphrase, salt)
     const check = manifest.crypto.keyCheck
 
     const iv = Buffer.from(check.iv, 'base64')
@@ -530,28 +238,11 @@ export class VaultManager implements IVaultManager {
       decipher.setAuthTag(tag)
 
       const decrypted = Buffer.concat([decipher.update(data), decipher.final()])
-      if (decrypted.toString('utf8') !== 'vault-check') {
-        throw new Error()
-      }
+      if (decrypted.toString('utf8') !== 'vault-check') throw new Error()
 
       return key
     } catch {
       throw new Error('Invalid passphrase')
     }
-  }
-
-  private getSession(vaultId: string): VaultSession {
-    const session = this.sessions.get(vaultId)
-    if (!session) throw new Error('Vault is locked')
-    return session
-  }
-
-  private getManifest(vaultPath: string): VaultManifest {
-    const manifestPath = join(vaultPath, 'manifest.json')
-    if (!existsSync(manifestPath))
-      throw new Error(`Manifest not found for vault at ${vaultPath}`)
-
-    const manifest = JSON.parse(readFileSync(manifestPath, 'utf-8'))
-    return manifest
   }
 }

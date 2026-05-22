@@ -1,40 +1,32 @@
 import { queryOptions } from '@tanstack/react-query'
 import {
+  getActiveUploads,
   getShouldPreview,
   getVaultFiles,
   getVaults,
   getViewStyle,
   hasSession,
-  readVaultFile,
   readVaultFileMeta,
 } from './actions'
 
 export const queryKeys = {
   all: () => ['vaults'],
   getFiles: (vaultId: string) => [...queryKeys.all(), 'files', vaultId],
-  readVaultFile: (vaultId: string, fileId: string) => [
+  readVaultFileMeta: (vaultId: string, fileId: string) => [
     ...queryKeys.all(),
-    'read',
     vaultId,
     fileId,
-  ],
-  readVaultFileMeta: (vaultId: string, fileId: string) => [
-    ...queryKeys.readVaultFile(vaultId, fileId),
     'meta',
   ],
   hasSession: (vaultId: string) => [...queryKeys.all(), 'hasSession', vaultId],
+
+  activeUploads: () => ['activeUploads'],
 
   // Settings
   settings: () => ['settings'],
   shouldPreview: () => [...queryKeys.settings(), 'should-preview'],
   viewStyle: () => [...queryKeys.settings(), 'view-style'],
 }
-
-export const readVaultFileQueryOptions = (vaultId: string, fileId: string) =>
-  queryOptions({
-    queryKey: queryKeys.readVaultFile(vaultId, fileId),
-    queryFn: () => readVaultFile(vaultId, fileId),
-  })
 
 export const readVaultFileMetaQueryOptions = (
   vaultId: string,
@@ -74,5 +66,12 @@ export const viewStyleQueryOptions = () =>
   queryOptions({
     queryKey: queryKeys.viewStyle(),
     queryFn: () => getViewStyle(),
+    staleTime: Infinity,
+  })
+
+export const activeUploadsQueryOptions = () =>
+  queryOptions({
+    queryKey: queryKeys.activeUploads(),
+    queryFn: () => getActiveUploads(),
     staleTime: Infinity,
   })

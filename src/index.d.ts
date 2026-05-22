@@ -15,5 +15,14 @@ declare global {
       ) => VaultStreamHandle
       abortStream: (streamId: string) => void
     }
+    uploads: {
+      start: (data: {
+        vaultId: string
+        name: string
+        mime: string
+      }) => Promise<string>
+      chunk: (streamId: string, chunk: ArrayBuffer) => Promise<void>
+      finish: (streamId: string) => Promise<string>
+    }
   }
 }

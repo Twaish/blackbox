@@ -2,7 +2,6 @@ import { useMutation } from '@tanstack/react-query'
 import {
   addExistingVault,
   addVaultFile,
-  addVaultFileStream,
   createVault,
   deleteVaultFile,
   removeSession,
@@ -11,6 +10,7 @@ import {
   toggleShouldPreview,
   unlinkVault,
   unlockVault,
+  uploadVaultFile,
   ViewStyle,
 } from './actions'
 import { queryClient } from '@/core/queryClient'
@@ -63,7 +63,7 @@ export const useRemoveVaultFile = (vaultId: string) =>
 
 export const useUploadVaultFileStream = (vaultId: string) =>
   useMutation({
-    mutationFn: (file: File) => addVaultFileStream(vaultId, file),
+    mutationFn: (file: File) => uploadVaultFile(vaultId, file),
     onSuccess: () =>
       queryClient.invalidateQueries({
         queryKey: queryKeys.getFiles(vaultId),

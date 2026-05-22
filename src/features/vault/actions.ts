@@ -1,4 +1,6 @@
 import { ipc } from '@/core/ipc'
+import { queryClient } from '@/core/queryClient'
+import { queryKeys } from './queries'
 
 export async function addVaultFile(
   vaultId: string,
@@ -12,16 +14,6 @@ export async function addVaultFile(
 
 export async function deleteVaultFile(vaultId: string, fileId: string) {
   return await ipc.client.vaults.deleteFile({ vaultId, fileId })
-}
-
-export async function readVaultFile(
-  vaultId: string,
-  fileId: string,
-): Promise<{ type: 'Buffer'; data: Buffer }> {
-  return await ipc.client.vaults.readFile({
-    vaultId,
-    fileId,
-  })
 }
 
 export async function streamVaultFile({
@@ -64,13 +56,7 @@ export async function streamVaultFile({
     },
   })
 
-  if (signal) {
-    if (signal.aborted) {
-      stream.cancel()
-    } else {
-      signal.addEventListener('abort', stream.cancel, { once: true })
-    }
-  }
+  signal?.addEventListener('abort', stream.cancel, { once: true })
 
   try {
     await stream.promise
@@ -149,39 +135,96 @@ export async function getVaults(): Promise<VaultEntry[]> {
 
 const CHUNK_SIZE = 1024 * 1024 // 1MB
 
-function readChunk(reader: FileReader, blob: Blob): Promise<ArrayBuffer> {
-  return new Promise((resolve, reject) => {
-    reader.onerror = () => reject(reader.error)
-    reader.onload = () => resolve(reader.result as ArrayBuffer)
-    reader.readAsArrayBuffer(blob)
-  })
+interface UploadState {
+  controller: AbortController
+  progress: number
+  name: string
+  mime: string
+  size: number
 }
 
-export async function addVaultFileStream(vaultId: string, file: File) {
-  const uploadId = await ipc.client.vaults.startUpload({
+const activeUploads = new Map<string, UploadState>()
+
+export async function uploadVaultFile(
+  vaultId: string,
+  file: File,
+): Promise<string | undefined> {
+  const abortController = new AbortController()
+
+  const streamId = await window.uploads.start({
     vaultId,
     name: file.name,
     mime: file.type,
   })
-
-  const reader = new FileReader()
-  let offset = 0
-
-  while (offset < file.size) {
-    const blob = file.slice(offset, offset + CHUNK_SIZE)
-    const arrayBuffer = await readChunk(reader, blob)
-
-    await ipc.client.vaults.uploadChunk({
-      uploadId,
-      chunk: Array.from(new Uint8Array(arrayBuffer)),
-    })
-
-    offset += CHUNK_SIZE
-  }
-
-  return await ipc.client.vaults.finishUpload({
-    uploadId,
+  activeUploads.set(streamId, {
+    controller: abortController,
+    progress: 0,
+    name: file.name,
+    mime: file.type,
+    size: file.size,
   })
+  invalidateActiveUploads()
+
+  try {
+    let offset = 0
+
+    while (offset < file.size) {
+      if (abortController.signal.aborted) {
+        throw new Error('Upload cancelled')
+      }
+
+      const chunk = file.slice(offset, offset + CHUNK_SIZE)
+      const arrayBuffer = await chunk.arrayBuffer()
+      await window.uploads.chunk(streamId, arrayBuffer)
+      await new Promise<void>((resolve) => setTimeout(resolve, 100))
+
+      offset += CHUNK_SIZE
+
+      const state = activeUploads.get(streamId)!
+      state.progress = Math.min(offset / file.size, 1)
+      invalidateActiveUploads()
+    }
+
+    return await window.uploads.finish(streamId)
+  } catch (err) {
+    window.streams.abortStream(streamId)
+    throw err
+  } finally {
+    activeUploads.delete(streamId)
+    invalidateActiveUploads()
+  }
+}
+
+export type UploadInfo = {
+  streamId: string
+  name: string
+  mime: string
+  size: number
+  progress: number
+}
+
+export function getActiveUploads(): UploadInfo[] {
+  return Array.from(activeUploads.entries()).map(([streamId, state]) => ({
+    streamId,
+    name: state.name,
+    mime: state.mime,
+    size: state.size,
+    progress: state.progress,
+  }))
+}
+
+export function abortUpload(streamId: string): void {
+  activeUploads.get(streamId)?.controller.abort()
+}
+
+export function abortAllUploads(): void {
+  for (const { controller } of activeUploads.values()) {
+    controller.abort()
+  }
+}
+
+export function invalidateActiveUploads() {
+  queryClient.invalidateQueries({ queryKey: queryKeys.activeUploads() })
 }
 
 export async function getShouldPreview(): Promise<boolean> {

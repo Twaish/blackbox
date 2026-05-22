@@ -8,9 +8,19 @@ window.addEventListener('message', (event) => {
   }
 })
 
+function deferred<T = void>() {
+  let resolve!: (v: T) => void
+  let reject!: (e: Error) => void
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res
+    reject = rej
+  })
+  return { promise, resolve, reject }
+}
+
 type StreamState = {
-  onChunk: (chunk: Uint8Array) => void
-  onEnd: (err?: string) => void
+  onChunk?: (chunk: Uint8Array) => void
+  onEnd?: (err?: string) => void
   resolve: () => void
   reject: (err: Error) => void
 }
@@ -19,7 +29,7 @@ const streams = new Map<string, StreamState>()
 ipcRenderer.on(
   'stream:chunk',
   (_: IpcRendererEvent, id: string, chunk: Uint8Array) => {
-    streams.get(id)?.onChunk(chunk)
+    streams.get(id)?.onChunk?.(chunk)
   },
 )
 
@@ -29,7 +39,7 @@ ipcRenderer.on(
     const stream = streams.get(id)
     if (!stream) return
 
-    stream.onEnd(err)
+    stream.onEnd?.(err)
     if (err) {
       stream.reject(new Error(err))
     } else {
@@ -48,14 +58,7 @@ function streamVaultFile(
   } = {},
 ) {
   const streamId = crypto.randomUUID()
-
-  let resolve!: () => void
-  let reject!: (err: Error) => void
-
-  const promise = new Promise<void>((res, rej) => {
-    resolve = res
-    reject = rej
-  })
+  const { promise, resolve, reject } = deferred()
 
   streams.set(streamId, {
     onChunk: handlers.onChunk ?? (() => {}),
@@ -79,4 +82,18 @@ function abortStream(streamId: string) {
 contextBridge.exposeInMainWorld('streams', {
   streamVaultFile,
   abortStream,
+})
+
+contextBridge.exposeInMainWorld('uploads', {
+  start: (data: { vaultId: string; name: string; mime: string }) => {
+    return ipcRenderer.invoke('upload:start', data)
+  },
+
+  chunk: (streamId: string, chunk: ArrayBuffer) => {
+    ipcRenderer.invoke('upload:chunk', streamId, chunk)
+  },
+
+  finish: (streamId: string): Promise<string> => {
+    return ipcRenderer.invoke('upload:finish', streamId)
+  },
 })

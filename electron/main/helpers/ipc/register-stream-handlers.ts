@@ -1,15 +1,16 @@
 import { ipcMain, WebContents } from 'electron'
 import { Modules } from './types'
 
-const abortControllers = new Map<string, AbortController>()
+function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err)
+}
 
-export function registerStreamHandlers(modules: Modules) {
-  ipcMain.on('stream:abort', (_event, streamId: string) => {
-    const controller = abortControllers.get(streamId)
-    if (!controller) return
+const abortHandlers = new Map<string, () => void>()
 
-    controller.abort()
-    abortControllers.delete(streamId)
+export function registerStreamHandlers({ VaultManager }: Modules) {
+  ipcMain.on('stream:abort', (_, streamId: string) => {
+    abortHandlers.get(streamId)?.()
+    abortHandlers.delete(streamId)
   })
 
   ipcMain.on(
@@ -23,15 +24,14 @@ export function registerStreamHandlers(modules: Modules) {
       }: { streamId: string; vaultId: string; fileId: string },
     ) => {
       const sender: WebContents = event.sender
-      const abortController = new AbortController()
-
-      abortControllers.set(streamId, abortController)
+      const controller = new AbortController()
+      abortHandlers.set(streamId, () => controller.abort())
 
       try {
-        for await (const chunk of modules.VaultManager.streamFile({
+        for await (const chunk of VaultManager.streamFile({
           vaultId,
           fileId,
-          signal: abortController.signal,
+          signal: controller.signal,
         })) {
           if (sender.isDestroyed()) return
           sender.send('stream:chunk', streamId, chunk)
@@ -41,14 +41,30 @@ export function registerStreamHandlers(modules: Modules) {
           sender.send('stream:end', streamId)
         }
       } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err)
-
         if (!sender.isDestroyed()) {
-          sender.send('stream:end', streamId, msg)
+          sender.send('stream:end', streamId, errorMessage(err))
         }
       } finally {
-        abortControllers.delete(streamId)
+        abortHandlers.delete(streamId)
       }
     },
   )
+
+  ipcMain.handle('upload:start', async (_, data) => {
+    const streamId = await VaultManager.startUpload(data)
+    abortHandlers.set(streamId, () => VaultManager.abortUpload({ streamId }))
+    return streamId
+  })
+
+  ipcMain.handle('upload:chunk', (_, streamId: string, chunk: ArrayBuffer) => {
+    return VaultManager.uploadChunk({ streamId, chunk })
+  })
+
+  ipcMain.handle('upload:finish', async (_, streamId: string) => {
+    try {
+      return await VaultManager.finishUpload({ streamId })
+    } finally {
+      abortHandlers.delete(streamId)
+    }
+  })
 }
