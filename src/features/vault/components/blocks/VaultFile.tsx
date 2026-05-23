@@ -3,9 +3,10 @@ import { useQuery } from '@tanstack/react-query'
 import { readVaultFileMetaQueryOptions } from '../../queries'
 import { FileHeader } from '../ui/FileHeader'
 import { FilePreview } from '../ui/FilePreview'
-import { useVaultFiles, useVaultFilesStore } from '../VaultFiles'
 import { memo, useCallback } from 'react'
 import { ViewStyle } from '../../actions'
+import { useVaultFiles } from '../../contexts/useVaultFiles'
+import { useVaultFilesStore } from '../../stores/useVaultFilesStore'
 
 export const VaultFile = memo(function VaultFile({
   fileId,

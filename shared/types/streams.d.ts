@@ -1,4 +1,5 @@
 export type VaultStreamHandle = {
+  streamId: string
   cancel: () => void
-  promise: Promise<void>
+  promise: Promise<unknown>
 }

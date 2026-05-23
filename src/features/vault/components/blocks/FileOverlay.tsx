@@ -10,11 +10,12 @@ import { useRemoveVaultFile } from '../../mutations'
 import { cn } from '@/utils/tailwind'
 import { Button } from '@/components/ui/button'
 import { useConfirmationDialog } from '@/components/confirmation-dialog/useConfirmationDialog'
-import { useVaultFiles, useVaultFilesStore } from '../VaultFiles'
 import { MimeIcon } from '../ui/MimeIcon'
 import { FileHeader } from '../ui/FileHeader'
 import { StreamedFileContent } from '../ui/FileContent'
 import { saveFile } from '@/app/instance/actions'
+import { useVaultFiles } from '../../contexts/useVaultFiles'
+import { useVaultFilesStore } from '../../stores/useVaultFilesStore'
 
 export function FileOverlay() {
   const vaultId = useVaultFiles()

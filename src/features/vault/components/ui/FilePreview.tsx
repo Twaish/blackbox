@@ -1,8 +1,7 @@
 import { memo, useEffect, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { shouldPreviewQueryOptions } from '../../queries'
 import { MimeIcon } from './MimeIcon'
 import { streamVaultFile } from '../../actions'
+import { useSettingsStore } from '../../stores/useSettingsStore'
 
 type CachedPreview = {
   url: string
@@ -59,7 +58,7 @@ export const FilePreview = memo(function FilePreview({
   meta: VaultFileMeta
   vaultId: string
 }) {
-  const { data: shouldPreview } = useQuery(shouldPreviewQueryOptions())
+  const shouldPreview = useSettingsStore((s) => s.shouldPreview)
   const mime = meta.original.mime
   const isImage = mime.startsWith('image/')
 

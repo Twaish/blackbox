@@ -5,7 +5,7 @@ import {
 } from '@/components/ui/popover'
 import { Settings } from 'lucide-react'
 import { ComponentProps } from 'react'
-import { PreviewToggle } from '../ui/PreviewToggle'
+import { PreviewToggle } from './PreviewToggle'
 import { cn } from '@/utils/tailwind'
 import { ViewStyleSelector } from './ViewStyleSelector'
 

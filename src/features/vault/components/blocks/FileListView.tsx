@@ -2,10 +2,11 @@ import { useQuery } from '@tanstack/react-query'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useRef, useEffect } from 'react'
 import { getVaultFilesQueryOptions } from '../../queries'
-import { useVaultFiles, useVaultFilesStore } from '../VaultFiles'
 import { EmptyFileView } from './EmptyFileView'
 import { VaultFile } from './VaultFile'
 import { cn } from '@/utils/tailwind'
+import { useVaultFiles } from '../../contexts/useVaultFiles'
+import { useVaultFilesStore } from '../../stores/useVaultFilesStore'
 
 const LIST_ITEM_HEIGHT = 48
 const GAP = 1

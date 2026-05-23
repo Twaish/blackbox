@@ -5,13 +5,10 @@ import {
   createVault,
   deleteVaultFile,
   removeSession,
-  setShouldPreview,
-  setViewStyle,
-  toggleShouldPreview,
+  renameVault,
   unlinkVault,
   unlockVault,
   uploadVaultFile,
-  ViewStyle,
 } from './actions'
 import { queryClient } from '@/core/queryClient'
 import { queryKeys } from './queries'
@@ -93,26 +90,12 @@ export const useCreateVault = () =>
       }),
   })
 
-export const useSetShouldPreview = () =>
+export const useRenameVault = (vaultId: string) =>
   useMutation({
-    mutationFn: (enabled: boolean) => setShouldPreview(enabled),
-    onSuccess: (enabled) => {
-      queryClient.setQueryData(queryKeys.shouldPreview(), enabled)
-    },
-  })
-
-export const useToggleShouldPreview = () =>
-  useMutation({
-    mutationFn: () => toggleShouldPreview(),
-    onSuccess: (enabled) => {
-      queryClient.setQueryData(queryKeys.shouldPreview(), enabled)
-    },
-  })
-
-export const useSetViewStyle = () =>
-  useMutation({
-    mutationFn: (viewStyle: ViewStyle) => setViewStyle(viewStyle),
-    onSuccess: (viewStyle) => {
-      queryClient.setQueryData(queryKeys.viewStyle(), viewStyle)
+    mutationFn: (name: string) => renameVault(vaultId, name),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.all(),
+      })
     },
   })

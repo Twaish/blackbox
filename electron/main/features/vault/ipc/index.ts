@@ -1,5 +1,26 @@
 import { Modules } from '@/helpers/ipc/types'
-import { ORPCError, os } from '@orpc/server'
+import { eventIterator, ORPCError, os } from '@orpc/server'
+import {
+  abortedEventSchema,
+  addFileInputSchema,
+  createInputSchema,
+  fileIdSchema,
+  finishedEventSchema,
+  getFilesOutputSchema,
+  getOutputSchema,
+  pathSchema,
+  progressEventSchema,
+  renameInputSchema,
+  restoreFileSchema,
+  startedEventSchema,
+  unlockInputSchema,
+  vaultFileMetaSchema,
+  vaultFileSchema,
+  vaultIdSchema,
+} from './schemas'
+import { createVaultUseCases } from '../usecases'
+import { MemoryPublisher } from '@orpc/experimental-publisher/memory'
+import { UploadEventMap } from '../adapters/UploadEvents'
 
 function withErrorHandling<TArgs extends any[], TResult>(
   fn: (...args: TArgs) => Promise<TResult> | TResult,
@@ -28,63 +49,147 @@ function withErrorHandling<TArgs extends any[], TResult>(
   }
 }
 
+export const subscriptionHandler = <T>(
+  iteratorFactory: (signal?: AbortSignal) => AsyncIterable<T>,
+) =>
+  withErrorHandling(async function* ({ signal }: { signal?: AbortSignal }) {
+    for await (const payload of iteratorFactory(signal)) {
+      yield payload
+    }
+  })
+
 export function createVaultRouters(modules: Modules) {
+  const { UploadEvents } = modules
+  const uploadPublisher = new MemoryPublisher<{
+    startedInfo: UploadEventMap['started']
+    progressInfo: UploadEventMap['progress']
+    finishedInfo: UploadEventMap['finished']
+    abortedInfo: UploadEventMap['aborted']
+  }>()
+
+  UploadEvents.on('started', (payload) =>
+    uploadPublisher.publish('startedInfo', payload),
+  )
+  UploadEvents.on('progress', (payload) =>
+    uploadPublisher.publish('progressInfo', payload),
+  )
+  UploadEvents.on('finished', (payload) =>
+    uploadPublisher.publish('finishedInfo', payload),
+  )
+  UploadEvents.on('aborted', (payload) =>
+    uploadPublisher.publish('abortedInfo', payload),
+  )
+
+  const usecases = createVaultUseCases(modules)
   return {
-    get: os.handler(withErrorHandling(() => modules.VaultManager.getVaults())),
-    create: os.handler(
-      withErrorHandling(({ input }) => modules.VaultManager.createVault(input)),
-    ),
-    addFile: os.handler(
-      withErrorHandling(({ input }) => modules.VaultManager.addFile(input)),
-    ),
-    deleteFile: os.handler(
-      withErrorHandling(({ input }) => modules.VaultManager.deleteFile(input)),
-    ),
-    readFile: os.handler(
-      withErrorHandling(({ input }) => modules.VaultManager.readFile(input)),
-    ),
-    readMeta: os.handler(
-      withErrorHandling(({ input }) => modules.VaultManager.readMeta(input)),
-    ),
-    restoreFile: os.handler(
-      withErrorHandling(({ input }) => modules.VaultManager.restoreFile(input)),
-    ),
-    hasSession: os.handler(
-      withErrorHandling(({ input }) => modules.VaultManager.hasSession(input)),
-    ),
-    removeSession: os.handler(
-      withErrorHandling(({ input }) =>
-        modules.VaultManager.removeSession(input),
+    onUploadStarted: os
+      .output(eventIterator(startedEventSchema))
+      .handler(
+        subscriptionHandler((signal) =>
+          uploadPublisher.subscribe('startedInfo', { signal }),
+        ),
       ),
-    ),
-    getFiles: os.handler(
-      withErrorHandling(({ input }) =>
-        modules.VaultManager.getVaultFiles(input),
+    onUploadProgress: os
+      .output(eventIterator(progressEventSchema))
+      .handler(
+        subscriptionHandler((signal) =>
+          uploadPublisher.subscribe('progressInfo', { signal }),
+        ),
       ),
-    ),
-    unlink: os.handler(
-      withErrorHandling(({ input }) => modules.VaultManager.unlinkVault(input)),
-    ),
-    unlock: os.handler(
-      withErrorHandling(({ input }) => modules.VaultManager.unlockVault(input)),
-    ),
-    addExisting: os.handler(
-      withErrorHandling(({ input }) =>
-        modules.VaultManager.addExistingVault(input),
+    onUploadFinished: os
+      .output(eventIterator(finishedEventSchema))
+      .handler(
+        subscriptionHandler((signal) =>
+          uploadPublisher.subscribe('finishedInfo', { signal }),
+        ),
       ),
-    ),
+    onUploadAborted: os
+      .output(eventIterator(abortedEventSchema))
+      .handler(
+        subscriptionHandler((signal) =>
+          uploadPublisher.subscribe('abortedInfo', { signal }),
+        ),
+      ),
 
-    startUpload: os.handler(
-      withErrorHandling(({ input }) => modules.VaultManager.startUpload(input)),
-    ),
-
-    uploadChunk: os.handler(
-      withErrorHandling(({ input }) => modules.VaultManager.uploadChunk(input)),
-    ),
-    finishUpload: os.handler(
-      withErrorHandling(({ input }) =>
-        modules.VaultManager.finishUpload(input),
+    get: os
+      .output(getOutputSchema)
+      .handler(withErrorHandling(() => usecases.getVaults.execute())),
+    unlink: os
+      .input(vaultIdSchema)
+      .handler(
+        withErrorHandling(({ input }) => usecases.unlinkVault.execute(input)),
       ),
-    ),
+    addExisting: os
+      .input(pathSchema)
+      .handler(
+        withErrorHandling(({ input }) =>
+          usecases.addExistingVault.execute(input),
+        ),
+      ),
+
+    hasSession: os
+      .input(vaultIdSchema)
+      .handler(
+        withErrorHandling(({ input }) =>
+          usecases.hasVaultSession.execute(input),
+        ),
+      ),
+    removeSession: os
+      .input(vaultIdSchema)
+      .handler(
+        withErrorHandling(({ input }) =>
+          usecases.removeVaultSession.execute(input),
+        ),
+      ),
+
+    create: os
+      .input(createInputSchema)
+      .handler(
+        withErrorHandling(({ input }) => usecases.createVault.execute(input)),
+      ),
+    rename: os
+      .input(renameInputSchema)
+      .handler(
+        withErrorHandling(({ input }) => usecases.renameVault.execute(input)),
+      ),
+    addFile: os
+      .input(addFileInputSchema)
+      .output(fileIdSchema)
+      .handler(
+        withErrorHandling(({ input }) => usecases.addVaultFile.execute(input)),
+      ),
+    deleteFile: os
+      .input(vaultFileSchema)
+      .handler(
+        withErrorHandling(({ input }) =>
+          usecases.deleteVaultFile.execute(input),
+        ),
+      ),
+    readMeta: os
+      .input(vaultFileSchema)
+      .output(vaultFileMetaSchema)
+      .handler(
+        withErrorHandling(({ input }) =>
+          usecases.readVaultFileMeta.execute(input),
+        ),
+      ),
+    restoreFile: os
+      .input(restoreFileSchema)
+      .handler(
+        withErrorHandling(({ input }) =>
+          usecases.restoreVaultFile.execute(input),
+        ),
+      ),
+    getFiles: os
+      .input(vaultIdSchema)
+      .output(getFilesOutputSchema)
+      .handler(
+        withErrorHandling(({ input }) => usecases.getVaultFiles.execute(input)),
+      ),
+    unlock: os
+      .input(unlockInputSchema)
+      .handler(
+        withErrorHandling(({ input }) => usecases.unlockVault.execute(input)),
+      ),
   }
 }

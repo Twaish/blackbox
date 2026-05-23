@@ -4,14 +4,11 @@ import {
   SelectItem,
   SelectTrigger,
 } from '@/components/ui/select'
-import { VIEW_STYLES } from '../../actions'
-import { useQuery } from '@tanstack/react-query'
-import { viewStyleQueryOptions } from '../../queries'
-import { useSetViewStyle } from '../../mutations'
+import { useSettingsStore, VIEW_STYLES } from '../../stores/useSettingsStore'
 
 export function ViewStyleSelector() {
-  const { data: viewStyle } = useQuery(viewStyleQueryOptions())
-  const { mutate: setViewStyle } = useSetViewStyle()
+  const viewStyle = useSettingsStore((s) => s.viewStyle)
+  const setViewStyle = useSettingsStore((s) => s.setViewStyle)
   return (
     <Select value={viewStyle} onValueChange={setViewStyle}>
       <SelectTrigger className="h-min max-h-min rounded-none border-0 p-0 font-mono text-xs">

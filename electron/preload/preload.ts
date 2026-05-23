@@ -24,7 +24,23 @@ type StreamState = {
   resolve: () => void
   reject: (err: Error) => void
 }
+
 const streams = new Map<string, StreamState>()
+const abortControllers = new Map<string, AbortController>()
+
+function cleanupStream(id: string) {
+  streams.delete(id)
+  abortControllers.delete(id)
+}
+
+function abortStream(streamId: string) {
+  const controller = abortControllers.get(streamId)
+  if (controller) {
+    controller.abort()
+  }
+  ipcRenderer.send('stream:abort', streamId)
+  cleanupStream(streamId)
+}
 
 ipcRenderer.on(
   'stream:chunk',
@@ -45,7 +61,7 @@ ipcRenderer.on(
     } else {
       stream.resolve()
     }
-    streams.delete(id)
+    cleanupStream(id)
   },
 )
 
@@ -70,30 +86,65 @@ function streamVaultFile(
   ipcRenderer.send('stream:start', { streamId, vaultId, fileId })
 
   return {
-    cancel: () => ipcRenderer.send('stream:abort', streamId),
+    streamId,
     promise,
+    cancel: () => abortStream(streamId),
   }
 }
 
-function abortStream(streamId: string) {
-  ipcRenderer.send('stream:abort', streamId)
+function uploadVaultFile(
+  vaultId: string,
+  name: string,
+  mime: string,
+  size: number,
+  getChunk: (offset: number, size: number) => Promise<ArrayBuffer>,
+) {
+  const streamId = crypto.randomUUID()
+  const { promise, resolve, reject } = deferred()
+
+  const abortController = new AbortController()
+
+  streams.set(streamId, { resolve, reject })
+  abortControllers.set(streamId, abortController)
+
+  ipcRenderer
+    .invoke('upload:start', { streamId, vaultId, name, mime, size })
+    .then(async () => {
+      const CHUNK_SIZE = 1024 * 1024
+      let offset = 0
+
+      try {
+        while (offset < size) {
+          if (abortController.signal.aborted)
+            throw new Error('Upload cancelled')
+
+          const chunk = await getChunk(offset, CHUNK_SIZE)
+
+          await ipcRenderer.invoke('upload:chunk', streamId, chunk)
+          await new Promise<void>((resolve) => setTimeout(resolve, 1000))
+
+          offset += CHUNK_SIZE
+        }
+
+        const fileId = await ipcRenderer.invoke('upload:finish', streamId)
+        resolve(fileId)
+      } catch (err) {
+        abortStream(streamId)
+        reject(err instanceof Error ? err : new Error(String(err)))
+      } finally {
+        cleanupStream(streamId)
+      }
+    })
+
+  return {
+    streamId,
+    promise,
+    cancel: () => abortStream(streamId),
+  }
 }
 
 contextBridge.exposeInMainWorld('streams', {
+  uploadVaultFile,
   streamVaultFile,
   abortStream,
-})
-
-contextBridge.exposeInMainWorld('uploads', {
-  start: (data: { vaultId: string; name: string; mime: string }) => {
-    return ipcRenderer.invoke('upload:start', data)
-  },
-
-  chunk: (streamId: string, chunk: ArrayBuffer) => {
-    ipcRenderer.invoke('upload:chunk', streamId, chunk)
-  },
-
-  finish: (streamId: string): Promise<string> => {
-    return ipcRenderer.invoke('upload:finish', streamId)
-  },
 })

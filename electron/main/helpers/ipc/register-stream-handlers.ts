@@ -1,70 +1,55 @@
-import { ipcMain, WebContents } from 'electron'
 import { Modules } from './types'
-
-function errorMessage(err: unknown): string {
-  return err instanceof Error ? err.message : String(err)
-}
-
-const abortHandlers = new Map<string, () => void>()
+import { StreamManager } from '@/core/StreamManager'
 
 export function registerStreamHandlers({ VaultManager }: Modules) {
-  ipcMain.on('stream:abort', (_, streamId: string) => {
-    abortHandlers.get(streamId)?.()
-    abortHandlers.delete(streamId)
-  })
+  const streams = new StreamManager()
+  streams.registerAbort()
+  streams.registerDownload({
+    startChannel: 'stream:start',
+    chunkChannel: 'stream:chunk',
+    endChannel: 'stream:end',
 
-  ipcMain.on(
-    'stream:start',
-    async (
-      event,
-      {
-        streamId,
+    handler: async function* (
+      { vaultId, fileId }: { vaultId: string; fileId: string },
+      { signal },
+    ) {
+      yield* VaultManager.streamFile({
         vaultId,
         fileId,
-      }: { streamId: string; vaultId: string; fileId: string },
-    ) => {
-      const sender: WebContents = event.sender
-      const controller = new AbortController()
-      abortHandlers.set(streamId, () => controller.abort())
-
-      try {
-        for await (const chunk of VaultManager.streamFile({
-          vaultId,
-          fileId,
-          signal: controller.signal,
-        })) {
-          if (sender.isDestroyed()) return
-          sender.send('stream:chunk', streamId, chunk)
-        }
-
-        if (!sender.isDestroyed()) {
-          sender.send('stream:end', streamId)
-        }
-      } catch (err) {
-        if (!sender.isDestroyed()) {
-          sender.send('stream:end', streamId, errorMessage(err))
-        }
-      } finally {
-        abortHandlers.delete(streamId)
-      }
+        signal,
+      })
     },
-  )
-
-  ipcMain.handle('upload:start', async (_, data) => {
-    const streamId = await VaultManager.startUpload(data)
-    abortHandlers.set(streamId, () => VaultManager.abortUpload({ streamId }))
-    return streamId
   })
+  streams.registerUpload({
+    startChannel: 'upload:start',
+    chunkChannel: 'upload:chunk',
+    endChannel: 'upload:finish',
 
-  ipcMain.handle('upload:chunk', (_, streamId: string, chunk: ArrayBuffer) => {
-    return VaultManager.uploadChunk({ streamId, chunk })
-  })
+    handler: {
+      async start({ streamId, vaultId, name, mime, size }) {
+        await VaultManager.startUpload({
+          streamId,
+          vaultId,
+          name,
+          mime,
+          size,
+        })
+      },
 
-  ipcMain.handle('upload:finish', async (_, streamId: string) => {
-    try {
-      return await VaultManager.finishUpload({ streamId })
-    } finally {
-      abortHandlers.delete(streamId)
-    }
+      async chunk(streamId, chunk) {
+        await VaultManager.uploadChunk({
+          streamId,
+          chunk,
+        })
+      },
+
+      async finish(streamId) {
+        return VaultManager.finishUpload({ streamId })
+      },
+
+      async abort(streamId) {
+        VaultManager.abortUpload({ streamId })
+      },
+    },
   })
 }

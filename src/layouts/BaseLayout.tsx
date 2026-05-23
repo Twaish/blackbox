@@ -5,6 +5,7 @@ import { getAppName } from '@/app/instance/actions'
 import { VaultSelector } from '@/features/vault/components/VaultSelector'
 import { UploadFileButton } from '@/features/vault/components/action-buttons/UploadFileButton'
 import { SettingsButton } from '@/features/vault/components/action-buttons/SettingsButton'
+import { UploadsButton } from '@/features/vault/components/action-buttons/UploadsButton'
 
 export default function BaseLayout({ children }: { children: ReactNode }) {
   const { data: appName } = useQuery({
@@ -18,6 +19,7 @@ export default function BaseLayout({ children }: { children: ReactNode }) {
       <DragWindowRegion title={appName}>
         <UploadFileButton />
         <VaultSelector />
+        <UploadsButton />
         <SettingsButton />
       </DragWindowRegion>
       <main className="relative h-full w-full overflow-hidden">

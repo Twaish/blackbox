@@ -5,6 +5,13 @@ export {}
 declare global {
   interface Window {
     streams: {
+      uploadVaultFile(
+        vaultId: string,
+        name: string,
+        mime: string,
+        size: number,
+        getChunk: (offset: number, size: number) => Promise<ArrayBuffer>,
+      ): VaultStreamHandle
       streamVaultFile: (
         vaultId: string,
         fileId: string,
@@ -14,15 +21,6 @@ declare global {
         },
       ) => VaultStreamHandle
       abortStream: (streamId: string) => void
-    }
-    uploads: {
-      start: (data: {
-        vaultId: string
-        name: string
-        mime: string
-      }) => Promise<string>
-      chunk: (streamId: string, chunk: ArrayBuffer) => Promise<void>
-      finish: (streamId: string) => Promise<string>
     }
   }
 }

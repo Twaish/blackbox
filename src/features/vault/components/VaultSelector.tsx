@@ -6,12 +6,12 @@ import { getVaultsQueryOptions, hasSessionQueryOptions } from '../queries'
 import {
   ChevronDown,
   FolderOpen,
+  FolderPen,
   Lock,
   LockOpen,
   LogOut,
   MoreHorizontal,
   Search,
-  Trash2,
   Unlink,
 } from 'lucide-react'
 import {
@@ -23,15 +23,16 @@ import { AddVaultButton } from './action-buttons/AddVaultButton'
 import { ImportVaultButton } from './action-buttons/ImportVaultButton'
 import { Highlight } from '@/components/Highlight'
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import { openFolder } from '@/app/instance/actions'
-import { useRemoveSession, useUnlinkVault } from '../mutations'
+import { useRemoveSession, useRenameVault, useUnlinkVault } from '../mutations'
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useConfirmationDialog } from '@/components/confirmation-dialog/useConfirmationDialog'
+import { useRenameVaultDialog } from '../hooks/useRenameVaultDialog'
 
 type VaultSelectorStore = {
   vault?: VaultEntry
@@ -40,12 +41,29 @@ type VaultSelectorStore = {
   setQuery: (query: string) => void
 }
 
-const useVaultSelectorStore = create<VaultSelectorStore>((set) => ({
-  vault: undefined,
-  query: '',
-  setVault: (vault) => set({ vault }),
-  setQuery: (query) => set({ query }),
-}))
+export const useVaultSelectorStore = create<VaultSelectorStore>()(
+  persist(
+    (set) => ({
+      vault: undefined,
+      query: '',
+      setVault: (vault) => set({ vault }),
+      setQuery: (query) => set({ query }),
+    }),
+    {
+      name: 'vault-selector',
+      partialize: (state) => ({
+        vault: state.vault,
+      }),
+    },
+  ),
+)
+
+// const useVaultSelectorStore = create<VaultSelectorStore>((set) => ({
+//   vault: undefined,
+//   query: '',
+//   setVault: (vault) => set({ vault }),
+//   setQuery: (query) => set({ query }),
+// }))
 
 export function VaultSelector({
   ...props
@@ -88,13 +106,25 @@ VaultSelector.SelectedVault = function SelectedVault({
       return
     }
 
-    // Set first available vault
-    const stillExists = vaults.find((v) => v.id === vault?.id)
-    if (!stillExists) {
+    const updatedVault = vaults.find((v) => v.id === vault?.id)
+
+    // Vault was removed
+    if (!updatedVault) {
       const nextVault = vaults[0]
       setVault(nextVault)
       setSelectedVault(nextVault.id)
+      return
     }
+
+    // Refresh selected vault data (e.g. renamed vault)
+    if (
+      updatedVault.name !== vault?.name ||
+      updatedVault.location !== vault.location
+    ) {
+      setVault(updatedVault)
+    }
+
+    setSelectedVault(updatedVault.id)
   }, [isLoading, vaults, vault?.id])
 
   return (
@@ -232,6 +262,7 @@ function VaultItem({
 VaultItem.Options = function Options({ vault }: { vault: VaultEntry }) {
   const [open, setOpen] = useState(false)
   const { mutate: unlinkVault } = useUnlinkVault()
+  const { mutate: renameVault } = useRenameVault(vault.id)
   const { mutate: removeSession } = useRemoveSession(vault.id)
   const { data: hasSession } = useQuery(hasSessionQueryOptions(vault.id))
   const { confirm: confirmUnlink } = useConfirmationDialog({
@@ -242,6 +273,10 @@ VaultItem.Options = function Options({ vault }: { vault: VaultEntry }) {
     title: 'Unlink this vault?',
     description: 'This will only unregister your vault, not delete it.',
   })
+  const { rename } = useRenameVaultDialog({
+    onRename: (name) => renameVault(name),
+    defaultName: vault.name,
+  })
 
   const handleOpenFolder = () => {
     openFolder(vault.location)
@@ -250,6 +285,11 @@ VaultItem.Options = function Options({ vault }: { vault: VaultEntry }) {
 
   const handleRemoveSession = () => {
     removeSession()
+    setOpen(false)
+  }
+
+  const handleRenameVault = async () => {
+    rename()
     setOpen(false)
   }
 
@@ -272,6 +312,18 @@ VaultItem.Options = function Options({ vault }: { vault: VaultEntry }) {
         align="end"
         className="flex w-full min-w-20 flex-col"
       >
+        <OptionButton onClick={noProp(handleRenameVault)}>
+          <OptionButton.Icon>
+            <FolderPen className="h-4 w-4" />
+          </OptionButton.Icon>
+          <OptionButton.Details>
+            <OptionButton.Title>Rename vault</OptionButton.Title>
+            <OptionButton.Description>
+              Change the name of this vault
+            </OptionButton.Description>
+          </OptionButton.Details>
+        </OptionButton>
+
         <OptionButton onClick={noProp(handleOpenFolder)}>
           <OptionButton.Icon>
             <FolderOpen className="h-4 w-4" />

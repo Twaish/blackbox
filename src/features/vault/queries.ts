@@ -1,10 +1,7 @@
 import { queryOptions } from '@tanstack/react-query'
 import {
-  getActiveUploads,
-  getShouldPreview,
   getVaultFiles,
   getVaults,
-  getViewStyle,
   hasSession,
   readVaultFileMeta,
 } from './actions'
@@ -19,8 +16,6 @@ export const queryKeys = {
     'meta',
   ],
   hasSession: (vaultId: string) => [...queryKeys.all(), 'hasSession', vaultId],
-
-  activeUploads: () => ['activeUploads'],
 
   // Settings
   settings: () => ['settings'],
@@ -53,25 +48,4 @@ export const hasSessionQueryOptions = (vaultId: string) =>
   queryOptions({
     queryKey: queryKeys.hasSession(vaultId),
     queryFn: () => hasSession(vaultId),
-  })
-
-export const shouldPreviewQueryOptions = () =>
-  queryOptions({
-    queryKey: queryKeys.shouldPreview(),
-    queryFn: () => getShouldPreview(),
-    staleTime: Infinity,
-  })
-
-export const viewStyleQueryOptions = () =>
-  queryOptions({
-    queryKey: queryKeys.viewStyle(),
-    queryFn: () => getViewStyle(),
-    staleTime: Infinity,
-  })
-
-export const activeUploadsQueryOptions = () =>
-  queryOptions({
-    queryKey: queryKeys.activeUploads(),
-    queryFn: () => getActiveUploads(),
-    staleTime: Infinity,
   })

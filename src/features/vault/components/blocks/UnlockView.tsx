@@ -3,7 +3,7 @@ import { KeyRound, EyeOff, Eye, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useUnlockVault } from '../../mutations'
 import { EmptyIndicator } from '../ui/EmptyIndicator'
-import { useVaultFiles } from '../VaultFiles'
+import { useVaultFiles } from '../../contexts/useVaultFiles'
 
 export function UnlockView() {
   const vaultId = useVaultFiles()

@@ -2,11 +2,12 @@ import { useQuery } from '@tanstack/react-query'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useRef, useEffect, useState, useLayoutEffect, useMemo } from 'react'
 import { getVaultFilesQueryOptions } from '../../queries'
-import { useVaultFiles, useVaultFilesStore } from '../VaultFiles'
 import { EmptyFileView } from './EmptyFileView'
 import { VaultFile } from './VaultFile'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/utils/tailwind'
+import { useVaultFiles } from '../../contexts/useVaultFiles'
+import { useVaultFilesStore } from '../../stores/useVaultFilesStore'
 
 const ITEM_HEIGHT = 320
 const GAP = 1
