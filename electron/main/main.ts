@@ -22,6 +22,7 @@ import { UploadStore } from './features/vault/adapters/UploadStore'
 import { EncryptedJsonStore } from './features/vault/adapters/EncryptedJsonStore'
 import { VaultCrypto } from './features/vault/adapters/VaultCrypto'
 import { VaultPaths } from './features/vault/adapters/VaultPaths'
+import { UploadEvents } from './features/vault/adapters/UploadEvents'
 
 app.commandLine.appendSwitch('trace-warnings')
 app.whenReady().then(async () => {
@@ -47,6 +48,7 @@ app.whenReady().then(async () => {
       settingsRegistry,
     )
 
+    const uploadEvents = new UploadEvents()
     const vaultPaths = new VaultPaths()
     const vaultCrypto = new VaultCrypto()
     const sessionStore = new SessionStore()
@@ -56,12 +58,14 @@ app.whenReady().then(async () => {
       encryptedJsonStore,
       vaultCrypto,
       vaultPaths,
+      uploadEvents,
     )
     const uploadStore = new UploadStore(
       encryptedJsonStore,
       vaultCrypto,
       vaultPaths,
       vaultFileStore,
+      uploadEvents,
     )
 
     const vaultRegistry = new VaultRegistry(settingsBuilder, vaultPaths)
@@ -84,6 +88,10 @@ app.whenReady().then(async () => {
       SettingsRegistry: settingsRegistry,
 
       VaultManager: vaultManager,
+      VaultRegistry: vaultRegistry,
+      SessionStore: sessionStore,
+
+      UploadEvents: uploadEvents,
     }
 
     app.on('before-quit', async () => {
