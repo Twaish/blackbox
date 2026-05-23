@@ -6,6 +6,7 @@ import { VaultCrypto } from './VaultCrypto'
 import { VaultFileStore } from './VaultFileStore'
 import { EncryptedJsonStore } from './EncryptedJsonStore'
 import { writeToStream } from '../utils/write-to-stream'
+import { UploadEvents } from './UploadEvents'
 
 type UploadSession = {
   streamId: string
@@ -16,6 +17,8 @@ type UploadSession = {
   iv: Buffer
   name: string
   mime: string
+  size: number
+  transferred: number
 }
 
 export class UploadStore {
@@ -26,15 +29,17 @@ export class UploadStore {
     private crypto: VaultCrypto,
     private paths: VaultPaths,
     private files: VaultFileStore,
+    private events: UploadEvents,
   ) {}
 
   async start(
+    streamId: string,
     vault: VaultEntry,
     key: Buffer,
     name: string,
     mime: string,
+    size: number,
   ): Promise<string> {
-    const streamId = randomUUID()
     const fileId = randomUUID()
     const { iv, cipher } = this.crypto.createEncryptionStream(key)
 
@@ -50,13 +55,32 @@ export class UploadStore {
       iv,
       name,
       mime,
+      size,
+      transferred: 0,
     })
+
+    this.events.emit('started', {
+      uploadId: streamId,
+      filename: name,
+      total: size,
+    })
+
     return streamId
   }
 
   async chunk(streamId: string, chunk: ArrayBuffer): Promise<void> {
     const upload = this.get(streamId)
-    await writeToStream(upload.stream, upload.cipher.update(Buffer.from(chunk)))
+    const buffer = Buffer.from(chunk)
+    upload.transferred += buffer.length
+
+    await writeToStream(upload.stream, upload.cipher.update(buffer))
+
+    this.events.emit('progress', {
+      uploadId: streamId,
+      transferred: upload.transferred,
+      total: upload.size,
+      percent: Math.round((upload.transferred / upload.size) * 100),
+    })
   }
 
   async finish(
@@ -82,6 +106,10 @@ export class UploadStore {
     const metaPath = this.paths.meta(vault.location, fileId)
     await this.jsonStore.write(metaPath, metadata, key)
     this.uploads.delete(streamId)
+    this.events.emit('finished', {
+      uploadId: streamId,
+      fileId,
+    })
     return fileId
   }
 
@@ -97,6 +125,9 @@ export class UploadStore {
 
     this.uploads.delete(streamId)
     this.files.delete(vault, upload.fileId)
+    this.events.emit('aborted', {
+      uploadId: streamId,
+    })
   }
 
   get(streamId: string): UploadSession {
