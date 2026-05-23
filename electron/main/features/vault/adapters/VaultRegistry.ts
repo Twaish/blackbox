@@ -43,8 +43,19 @@ export class VaultRegistry {
   add(entry: VaultEntry): void {
     this.settings.vaults = [...this.settings.vaults, entry]
   }
+  async addExisting(location: string): Promise<void> {
+    const { id, name } = (await this.getManifest(location)) ?? {}
+    if (this.has(id))
+      throw new Error(`Vault "${name}" with id ${id} already exists`)
+    this.add({ id, name, location })
+  }
   remove(id: string): void {
     this.settings.vaults = this.settings.vaults.filter((v) => v.id !== id)
+  }
+  update(id: string, patch: Partial<VaultEntry>): void {
+    this.settings.vaults = this.settings.vaults.map((vault) =>
+      vault.id === id ? { ...vault, ...patch } : vault,
+    )
   }
 
   async getManifest(vaultPath: string): Promise<VaultManifest> {
