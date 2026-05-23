@@ -32,18 +32,6 @@ export class VaultManager implements IVaultManager {
     return this.files.add(vault, session.key, filepath)
   }
 
-  async readFile({
-    vaultId,
-    fileId,
-  }: {
-    vaultId: string
-    fileId: string
-  }): Promise<Buffer> {
-    const vault = this.registry.get(vaultId)
-    const session = this.sessions.get(vaultId)
-    return this.files.read(vault, session.key, fileId)
-  }
-
   async readMeta({
     vaultId,
     fileId,
@@ -83,7 +71,9 @@ export class VaultManager implements IVaultManager {
     fileId: string
     outputFilepath: string
   }): Promise<void> {
-    const fileBuffer = await this.readFile({ vaultId, fileId })
+    const vault = this.registry.get(vaultId)
+    const session = this.sessions.get(vaultId)
+    const fileBuffer = await this.files.read(vault, session.key, fileId)
     await writeFile(outputFilepath, fileBuffer)
   }
 
@@ -143,45 +133,45 @@ export class VaultManager implements IVaultManager {
     this.sessions.set(vaultId, key)
   }
 
-  async addExistingVault(location: string): Promise<void> {
-    const { id, name } = (await this.registry.getManifest(location)) ?? {}
-    if (this.registry.has(id))
-      throw new Error(`Vault "${name}" with id ${id} already exists`)
-    this.registry.add({ id, name, location })
-  }
+  async renameVault({ vaultId, name }: { vaultId: string; name: string }) {
+    const vault = this.registry.get(vaultId)
+    const manifest = await this.registry.getManifest(vault.location)
 
-  getVaults() {
-    return this.registry.getAll()
+    manifest.name = name
+
+    const manifestPath = this.paths.manifest(vault.location)
+    await writeFile(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8')
+
+    this.registry.update(vaultId, { name })
   }
 
   getVaultFiles(vaultId: string): string[] {
     return this.files.list(this.registry.get(vaultId))
   }
 
-  hasSession(vaultId: string): boolean {
-    return this.sessions.has(vaultId)
-  }
-
-  removeSession(vaultId: string): void {
-    this.sessions.remove(vaultId)
-  }
-
-  unlinkVault(id: string): void {
-    this.registry.remove(id)
-  }
-
   async startUpload({
+    streamId,
     vaultId,
     name,
     mime,
+    size,
   }: {
+    streamId: string
     vaultId: string
     name: string
     mime: string
+    size: number
   }): Promise<string> {
     const vault = this.registry.get(vaultId)
     const session = this.sessions.get(vaultId)
-    return await this.uploads.start(vault, session.key, name, mime)
+    return await this.uploads.start(
+      streamId,
+      vault,
+      session.key,
+      name,
+      mime,
+      size,
+    )
   }
 
   async uploadChunk({

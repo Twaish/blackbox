@@ -4,12 +4,12 @@ interface IVaultManager {
     name: string
     passphrase: string
   }): Promise<void>
+  unlockVault(args: { vaultId: string; passphrase: string }): Promise<void>
+  renameVault(args: { vaultId: string; name: string }): Promise<void>
 
   addFile(args: { vaultId: string; filepath: string }): Promise<string>
 
   deleteFile(args: { vaultId: string; fileId: string }): void
-
-  readFile(args: { vaultId: string; fileId: string }): Promise<Buffer>
 
   streamFile(args: {
     vaultId: string
@@ -25,22 +25,16 @@ interface IVaultManager {
     outputFilepath: string
   }): Promise<void>
 
-  hasSession(vaultId: string): boolean
-  removeSession(vaultId: string): void
-
   getVaultFiles(vaultId: string): string[]
 
-  unlockVault(args: { vaultId: string; passphrase: string }): Promise<void>
-  addExistingVault(vaultPath: string): Promise<void>
-  unlinkVault(id: string): void
-  getVaults(): VaultEntry[]
-
   startUpload(args: {
+    streamId: string
     vaultId: string
     name: string
     mime: string
+    size: number
   }): Promise<string>
-  uploadChunk(args: { streamId: string; chunk: ArrayBuffer }): void
+  uploadChunk(args: { streamId: string; chunk: ArrayBuffer }): Promise<void>
   finishUpload(args: { streamId: string }): Promise<string>
   abortUpload(args: { streamId: string }): Promise<void>
 }
