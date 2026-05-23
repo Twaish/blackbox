@@ -58,13 +58,6 @@ export const useVaultSelectorStore = create<VaultSelectorStore>()(
   ),
 )
 
-// const useVaultSelectorStore = create<VaultSelectorStore>((set) => ({
-//   vault: undefined,
-//   query: '',
-//   setVault: (vault) => set({ vault }),
-//   setQuery: (query) => set({ query }),
-// }))
-
 export function VaultSelector({
   ...props
 }: ComponentProps<typeof PopoverTrigger>) {
@@ -131,7 +124,6 @@ VaultSelector.SelectedVault = function SelectedVault({
     <button
       className={cn(
         'no-drag focus-visible:bg-secondary/50 hover:bg-secondary/50 flex h-full w-auto items-center gap-1 px-2 text-xs outline-none select-none focus-visible:ring-0',
-        // 'no-drag bg-secondary/25 hover:bg-secondary/50 flex w-auto items-center gap-1 rounded-md border px-2 py-1 text-xs outline-none select-none focus-visible:ring-0',
         className,
       )}
       {...props}
@@ -180,10 +172,7 @@ VaultSelector.Items = function Items() {
     if (!normalizedQuery) return vaults
 
     return vaults.filter((vault) => {
-      return (
-        vault.name.toLowerCase().includes(normalizedQuery) ||
-        vault.location.toLowerCase().includes(normalizedQuery)
-      )
+      return vault.name.toLowerCase().includes(normalizedQuery)
     })
   }, [vaults, query])
 
