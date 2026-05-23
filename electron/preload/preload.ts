@@ -121,7 +121,6 @@ function uploadVaultFile(
           const chunk = await getChunk(offset, CHUNK_SIZE)
 
           await ipcRenderer.invoke('upload:chunk', streamId, chunk)
-          await new Promise<void>((resolve) => setTimeout(resolve, 1000))
 
           offset += CHUNK_SIZE
         }
