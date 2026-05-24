@@ -1,4 +1,4 @@
-import { useState, useEffect, ComponentProps, Suspense } from 'react'
+import { useState, useEffect, ComponentProps } from 'react'
 import { Inbox, X } from 'lucide-react'
 import {
   Popover,
@@ -12,6 +12,7 @@ import {
   onUploadProgress,
   onUploadStarted,
 } from '../../actions'
+import { cn } from '@/utils/tailwind'
 
 type UploadInfo = {
   uploadId: string
@@ -101,19 +102,35 @@ export function UploadsButton(props: ComponentProps<typeof PopoverTrigger>) {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger {...props} asChild>
         <button
-          title="Upload jobs"
-          className="no-drag hover:bg-secondary/50 h-full px-1"
+          title="Tasks"
+          className={cn(
+            'no-drag hover:bg-secondary/50 h-full px-1',
+            open && 'bg-secondary/50',
+          )}
         >
-          <Inbox className="text-muted-foreground h-3.5 w-3.5" />
+          <Inbox
+            className={cn(
+              'text-muted-foreground h-3.5 w-3.5',
+              open && 'text-secondary-foreground',
+            )}
+          />
         </button>
       </PopoverTrigger>
 
-      <PopoverContent align="end" className="flex min-w-120 flex-col gap-1 p-2">
+      <PopoverContent className="mr-2 flex min-w-80 flex-col gap-1 p-2">
         <p className="text-muted-foreground text-xs font-medium">
           Uploading ({uploads.length})
         </p>
         {uploads.length ? (
-          <ActiveUploads uploads={uploads} />
+          <div className="flex flex-col gap-1.5">
+            {uploads.map((upload) => (
+              <ActiveUploadItem
+                key={upload.uploadId}
+                upload={upload}
+                onAbort={abortStream}
+              />
+            ))}
+          </div>
         ) : (
           <div className="text-muted-foreground flex h-20 w-full items-center justify-center text-xs">
             No uploads
@@ -121,6 +138,54 @@ export function UploadsButton(props: ComponentProps<typeof PopoverTrigger>) {
         )}
       </PopoverContent>
     </Popover>
+  )
+}
+
+export function ActiveUploadItem({
+  upload,
+  onAbort,
+}: {
+  upload: UploadInfo
+  onAbort: (uploadId: string) => void
+}) {
+  return (
+    <div className="bg-background/50 flex items-center gap-2 text-xs backdrop-blur-md">
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-xs">{upload.name}</div>
+
+        <div className="flex items-center">
+          <div className="text-muted-foreground mt-0.5 text-[11px] whitespace-pre">
+            {formatBytes(upload.transferred)} / {formatBytes(upload.total!)}
+          </div>
+
+          <div className="ml-auto flex items-center">
+            <div className="flex w-16 gap-px">
+              {Array.from({ length: 10 }).map((_, j) => (
+                <div
+                  key={j}
+                  className={`h-2 flex-1 rounded-[1px] ${
+                    j < Math.floor(upload.percent / 10)
+                      ? 'bg-primary'
+                      : 'bg-secondary'
+                  }`}
+                />
+              ))}
+            </div>
+
+            <span className="w-8 text-right font-mono text-[11px]">
+              {upload.percent}%
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <button
+        onClick={() => onAbort(upload.uploadId)}
+        className="text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
+    </div>
   )
 }
 
@@ -133,60 +198,4 @@ function formatBytes(bytes: number) {
   const value = bytes / Math.pow(1024, i)
 
   return `${value.toFixed(value >= 10 || i === 0 ? 0 : 1)} ${units[i]}`
-}
-
-export function ActiveUploadItem({
-  upload,
-  onAbort,
-}: {
-  upload: UploadInfo
-  onAbort: (uploadId: string) => void
-}) {
-  return (
-    <div className="flex items-center gap-2 text-xs">
-      <span className="min-w-0 flex-1 truncate">{upload.name}</span>
-
-      <div className="text-muted-foreground ml-auto flex text-[11px]">
-        {formatBytes(upload.transferred)} / {formatBytes(upload.total!)}
-      </div>
-
-      <div className="flex w-14 gap-px">
-        {Array.from({ length: 10 }).map((_, j) => (
-          <div
-            key={j}
-            className={`h-2.5 flex-1 ${
-              j < Math.floor(upload.percent / 10)
-                ? 'bg-primary'
-                : 'bg-secondary'
-            }`}
-          />
-        ))}
-      </div>
-
-      <span className="w-8 text-right font-mono">{upload.percent}%</span>
-
-      <button
-        onClick={() => onAbort(upload.uploadId)}
-        className="text-secondary-foreground/50 hover:text-secondary-foreground text-xs"
-      >
-        <X className="h-3.5 w-3.5" />
-      </button>
-    </div>
-  )
-}
-
-export function ActiveUploads({ uploads }: { uploads: UploadInfo[] }) {
-  if (uploads.length === 0) return null
-
-  return (
-    <div className="flex flex-col gap-1.5">
-      {uploads.map((upload) => (
-        <ActiveUploadItem
-          key={upload.uploadId}
-          upload={upload}
-          onAbort={abortStream}
-        />
-      ))}
-    </div>
-  )
 }

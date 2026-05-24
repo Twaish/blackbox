@@ -4,7 +4,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { Settings } from 'lucide-react'
-import { ComponentProps } from 'react'
+import { ComponentProps, useState } from 'react'
 import { PreviewToggle } from './PreviewToggle'
 import { cn } from '@/utils/tailwind'
 import { ViewStyleSelector } from './ViewStyleSelector'
@@ -12,14 +12,23 @@ import { ViewStyleSelector } from './ViewStyleSelector'
 export function SettingsButton({
   ...props
 }: ComponentProps<typeof PopoverTrigger>) {
+  const [open, setOpen] = useState(false)
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger {...props} asChild>
         <button
           title="Settings"
-          className="no-drag hover:bg-secondary/50 h-full px-1"
+          className={cn(
+            'no-drag hover:bg-secondary/50 h-full px-1',
+            open && 'bg-secondary/50',
+          )}
         >
-          <Settings className="text-muted-foreground h-3.5 w-3.5" />
+          <Settings
+            className={cn(
+              'text-muted-foreground h-3.5 w-3.5',
+              open && 'text-secondary-foreground',
+            )}
+          />
         </button>
       </PopoverTrigger>
       <PopoverContent

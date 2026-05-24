@@ -61,10 +61,13 @@ export const useVaultSelectorStore = create<VaultSelectorStore>()(
 export function VaultSelector({
   ...props
 }: ComponentProps<typeof PopoverTrigger>) {
+  const [open, setOpen] = useState(false)
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger {...props} asChild>
-        <VaultSelector.SelectedVault />
+        <VaultSelector.SelectedVault
+          className={cn(open && 'bg-secondary/50')}
+        />
       </PopoverTrigger>
       <PopoverContent
         align={'end'}
