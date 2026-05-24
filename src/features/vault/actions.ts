@@ -119,6 +119,15 @@ export async function restoreVaultFile(
     outputFilepath,
   })
 }
+export async function restoreAllVaultFiles(
+  vaultId: string,
+  outputDir: string,
+): Promise<void> {
+  return await ipc.client.vaults.restoreAllFiles({
+    vaultId,
+    outputDir,
+  })
+}
 
 export async function getVaultFiles(vaultId: string): Promise<string[]> {
   return await ipc.client.vaults.getFiles(vaultId)

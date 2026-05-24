@@ -4,6 +4,7 @@ import { cn } from '@/utils/tailwind'
 import { useVaultStore } from '../stores/useVaultStore'
 import { getVaultsQueryOptions, hasSessionQueryOptions } from '../queries'
 import {
+  ArrowRightFromLine,
   ChevronDown,
   FolderOpen,
   FolderPen,
@@ -24,7 +25,7 @@ import { ImportVaultButton } from './action-buttons/ImportVaultButton'
 import { Highlight } from '@/components/Highlight'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { openFolder } from '@/app/instance/actions'
+import { openFolder, selectFolder } from '@/app/instance/actions'
 import { useRemoveSession, useRenameVault, useUnlinkVault } from '../mutations'
 import {
   DropdownMenu,
@@ -33,6 +34,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useConfirmationDialog } from '@/components/confirmation-dialog/useConfirmationDialog'
 import { useRenameVaultDialog } from '../hooks/useRenameVaultDialog'
+import { restoreAllVaultFiles } from '../actions'
 
 type VaultSelectorStore = {
   vault?: VaultEntry
@@ -280,6 +282,14 @@ VaultItem.Options = function Options({ vault }: { vault: VaultEntry }) {
     setOpen(false)
   }
 
+  const handleExportFiles = async () => {
+    const outputDir = await selectFolder()
+    if (!outputDir) return
+
+    restoreAllVaultFiles(vault.id, outputDir)
+    setOpen(false)
+  }
+
   const handleRenameVault = async () => {
     rename()
     setOpen(false)
@@ -329,6 +339,19 @@ VaultItem.Options = function Options({ vault }: { vault: VaultEntry }) {
         </OptionButton>
 
         {hasSession && (
+          <OptionButton onClick={noProp(handleExportFiles)}>
+            <OptionButton.Icon>
+              <ArrowRightFromLine className="h-4 w-4" />
+            </OptionButton.Icon>
+            <OptionButton.Details>
+              <OptionButton.Title>Export files</OptionButton.Title>
+              <OptionButton.Description>
+                Export all files to a chosen folder
+              </OptionButton.Description>
+            </OptionButton.Details>
+          </OptionButton>
+        )}
+        {hasSession && (
           <OptionButton onClick={noProp(handleRemoveSession)}>
             <OptionButton.Icon>
               <LogOut className="h-4 w-4" />
@@ -365,6 +388,7 @@ function OptionButton({
   return (
     <button
       className={cn(
+        // 'hover:bg-secondary/50 flex h-6 gap-1 rounded-md px-1 py-1',
         'hover:bg-secondary/50 flex h-10 gap-2 rounded-md px-2 py-1',
         className,
       )}
@@ -415,6 +439,7 @@ OptionButton.Description = function Description({
   children,
   ...props
 }: ComponentProps<'span'>) {
+  // return null
   return (
     <span className={cn('text-muted-foreground text-xs', className)} {...props}>
       {children}
