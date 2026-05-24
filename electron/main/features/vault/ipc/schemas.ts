@@ -67,6 +67,10 @@ export const addFileInputSchema = z.object({
 export const restoreFileSchema = vaultFileSchema.extend({
   outputFilepath: z.string(),
 })
+export const restoreAllFilesInputSchema = z.object({
+  vaultId: vaultIdSchema,
+  outputDir: pathSchema,
+})
 
 export const getFilesOutputSchema = z.array(fileIdSchema)
 

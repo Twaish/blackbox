@@ -12,6 +12,7 @@ import RestoreVaultFile from './restoreVaultFile'
 import GetVaultFiles from './getVaultFiles'
 import UnlockVault from './unlockVault'
 import RenameVault from './renameVault'
+import RestoreAllVaultFiles from './restoreAllVaultFiles'
 
 export function createVaultUseCases({
   VaultRegistry,
@@ -32,6 +33,7 @@ export function createVaultUseCases({
     deleteVaultFile: new DeleteVaultFile(VaultManager),
     readVaultFileMeta: new ReadVaultFileMeta(VaultManager),
     restoreVaultFile: new RestoreVaultFile(VaultManager),
+    restoreAllVaultFiles: new RestoreAllVaultFiles(VaultManager),
     getVaultFiles: new GetVaultFiles(VaultManager),
     unlockVault: new UnlockVault(VaultManager),
   }

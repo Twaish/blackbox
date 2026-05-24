@@ -11,6 +11,7 @@ import {
   pathSchema,
   progressEventSchema,
   renameInputSchema,
+  restoreAllFilesInputSchema,
   restoreFileSchema,
   startedEventSchema,
   unlockInputSchema,
@@ -178,6 +179,13 @@ export function createVaultRouters(modules: Modules) {
       .handler(
         withErrorHandling(({ input }) =>
           usecases.restoreVaultFile.execute(input),
+        ),
+      ),
+    restoreAllFiles: os
+      .input(restoreAllFilesInputSchema)
+      .handler(
+        withErrorHandling(({ input }) =>
+          usecases.restoreAllVaultFiles.execute(input),
         ),
       ),
     getFiles: os

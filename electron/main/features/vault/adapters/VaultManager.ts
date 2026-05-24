@@ -1,12 +1,13 @@
 import { randomUUID, randomBytes, createDecipheriv } from 'node:crypto'
 import { join } from 'path'
-import { mkdir, writeFile } from 'node:fs/promises'
+import { access, mkdir, writeFile } from 'node:fs/promises'
 import { VaultPaths } from './VaultPaths'
 import { VaultCrypto } from './VaultCrypto'
 import { VaultRegistry } from './VaultRegistry'
 import { SessionStore } from './SessionStore'
 import { VaultFileStore } from './VaultFileStore'
 import { UploadStore } from './UploadStore'
+import path from 'node:path'
 
 const ALGO = 'aes-256-gcm'
 
@@ -75,6 +76,60 @@ export class VaultManager implements IVaultManager {
     const session = this.sessions.get(vaultId)
     const fileBuffer = await this.files.read(vault, session.key, fileId)
     await writeFile(outputFilepath, fileBuffer)
+  }
+  async restoreAllFiles({
+    vaultId,
+    outputDir,
+  }: {
+    vaultId: string
+    outputDir: string
+  }): Promise<void> {
+    const vault = this.registry.get(vaultId)
+    const session = this.sessions.get(vaultId)
+
+    const fileIds = this.files.list(vault)
+
+    for (const fileId of fileIds) {
+      const meta = await this.files.readMeta(vault, session.key, fileId)
+
+      const outputPath = await this.getUniqueRestorePath(
+        outputDir,
+        meta.original.name,
+      )
+
+      await mkdir(path.dirname(outputPath), { recursive: true })
+
+      const fileBuffer = await this.files.read(vault, session.key, fileId)
+
+      await writeFile(outputPath, fileBuffer)
+    }
+  }
+  private async getUniqueRestorePath(
+    outputDir: string,
+    filename: string,
+  ): Promise<string> {
+    const ext = path.extname(filename)
+    const base = path.basename(filename, ext)
+
+    let candidate = path.join(outputDir, filename)
+    let counter = 1
+
+    while (await this.pathExists(candidate)) {
+      candidate = path.join(outputDir, `${base} (${counter})${ext}`)
+
+      counter++
+    }
+
+    return candidate
+  }
+
+  private async pathExists(filepath: string): Promise<boolean> {
+    try {
+      await access(filepath)
+      return true
+    } catch {
+      return false
+    }
   }
 
   deleteFile({ vaultId, fileId }: { vaultId: string; fileId: string }): void {
