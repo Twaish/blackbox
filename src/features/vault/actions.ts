@@ -1,7 +1,4 @@
 import { ipc } from '@/core/ipc'
-import { queryClient } from '@/core/queryClient'
-import { queryKeys } from './queries'
-import { AsyncIteratorClass, consumeEventIterator } from '@orpc/client'
 
 export async function addVaultFile(
   vaultId: string,
@@ -178,33 +175,3 @@ export async function addExistingVault(vaultPath: string) {
 export async function getVaults(): Promise<VaultEntry[]> {
   return await ipc.client.vaults.get()
 }
-
-type EventFactory<T = any> = () => Promise<AsyncIteratorClass<T>>
-
-function createEventHandler<T = any>(
-  name: string,
-  eventFactory: EventFactory<T>,
-) {
-  return (callback: (event: T) => void) => {
-    return consumeEventIterator(eventFactory(), {
-      onEvent: callback,
-      onError: (err) => {
-        if (err.name === 'AbortError') return
-        console.error(`${name} error`, err)
-      },
-    })
-  }
-}
-
-export const onUploadStarted = createEventHandler('onUploadStarted', () =>
-  ipc.client.vaults.onUploadStarted(),
-)
-export const onUploadProgress = createEventHandler('onUploadProgress', () =>
-  ipc.client.vaults.onUploadProgress(),
-)
-export const onUploadFinished = createEventHandler('onUploadFinished', () =>
-  ipc.client.vaults.onUploadFinished(),
-)
-export const onUploadAborted = createEventHandler('onUploadAborted', () =>
-  ipc.client.vaults.onUploadAborted(),
-)
