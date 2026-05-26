@@ -138,6 +138,13 @@ export async function vaultExists(vaultId: string): Promise<boolean> {
   return await ipc.client.vaults.exists(vaultId)
 }
 
+export async function changeVaultLocation(
+  vaultId: string,
+  location: string,
+): Promise<void> {
+  return await ipc.client.vaults.changeLocation({ vaultId, location })
+}
+
 export async function removeSession(vaultId: string) {
   return await ipc.client.vaults.removeSession(vaultId)
 }

@@ -14,6 +14,7 @@ import UnlockVault from './unlockVault'
 import RenameVault from './renameVault'
 import RestoreAllVaultFiles from './restoreAllVaultFiles'
 import VaultExists from './vaultExists'
+import ChangeVaultLocation from './changeVaultLocation'
 
 export function createVaultUseCases({
   VaultRegistry,
@@ -25,6 +26,7 @@ export function createVaultUseCases({
     unlinkVault: new UnlinkVault(VaultRegistry),
     vaultExists: new VaultExists(VaultRegistry),
     addExistingVault: new AddExistingVault(VaultRegistry),
+    changeVaultLocation: new ChangeVaultLocation(VaultRegistry),
 
     hasVaultSession: new HasVaultSession(VaultSessions),
     removeVaultSession: new RemoveVaultSession(VaultSessions),

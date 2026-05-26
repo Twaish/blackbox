@@ -29,6 +29,11 @@ export const getOutputSchema = z.array(vaultEntrySchema)
 
 export const vaultExistsOutputSchema = z.boolean()
 
+export const changeLocationInputSchema = z.object({
+  vaultId: vaultIdSchema,
+  location: pathSchema,
+})
+
 export const createInputSchema = z.object({
   location: z.string(),
   name: z.string(),

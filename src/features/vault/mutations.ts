@@ -2,6 +2,7 @@ import { useMutation } from '@tanstack/react-query'
 import {
   addExistingVault,
   addVaultFile,
+  changeVaultLocation,
   createVault,
   deleteVaultFile,
   removeSession,
@@ -52,7 +53,7 @@ export const useUploadVaultFile = (vaultId: string) =>
 export const useRemoveVaultFile = (vaultId: string) =>
   useMutation({
     mutationFn: (fileId: string) => deleteVaultFile(vaultId, fileId),
-    onSuccess: () =>
+    onSettled: () =>
       queryClient.invalidateQueries({
         queryKey: queryKeys.getFiles(vaultId),
       }),
@@ -93,6 +94,16 @@ export const useCreateVault = () =>
 export const useRenameVault = (vaultId: string) =>
   useMutation({
     mutationFn: (name: string) => renameVault(vaultId, name),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.all(),
+      })
+    },
+  })
+
+export const useChangeVaultLocation = (vaultId: string) =>
+  useMutation({
+    mutationFn: (location: string) => changeVaultLocation(vaultId, location),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.all(),

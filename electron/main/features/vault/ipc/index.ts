@@ -2,6 +2,7 @@ import { Modules } from '@/helpers/ipc/types'
 import { ORPCError, os } from '@orpc/server'
 import {
   addFileInputSchema,
+  changeLocationInputSchema,
   createInputSchema,
   fileIdSchema,
   getFilesOutputSchema,
@@ -68,6 +69,13 @@ export function createVaultRouters(modules: Modules) {
       .output(vaultExistsOutputSchema)
       .handler(
         withErrorHandling(({ input }) => usecases.vaultExists.execute(input)),
+      ),
+    changeLocation: os
+      .input(changeLocationInputSchema)
+      .handler(
+        withErrorHandling(({ input }) =>
+          usecases.changeVaultLocation.execute(input),
+        ),
       ),
 
     hasSession: os
