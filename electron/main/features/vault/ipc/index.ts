@@ -1,27 +1,21 @@
 import { Modules } from '@/helpers/ipc/types'
-import { eventIterator, ORPCError, os } from '@orpc/server'
+import { ORPCError, os } from '@orpc/server'
 import {
-  abortedEventSchema,
   addFileInputSchema,
   createInputSchema,
   fileIdSchema,
-  finishedEventSchema,
   getFilesOutputSchema,
   getOutputSchema,
   pathSchema,
-  progressEventSchema,
   renameInputSchema,
   restoreAllFilesInputSchema,
   restoreFileSchema,
-  startedEventSchema,
   unlockInputSchema,
   vaultFileMetaSchema,
   vaultFileSchema,
   vaultIdSchema,
 } from './schemas'
 import { createVaultUseCases } from '../usecases'
-import { MemoryPublisher } from '@orpc/experimental-publisher/memory'
-import { UploadEventMap } from '../adapters/UploadEvents'
 
 function withErrorHandling<TArgs extends any[], TResult>(
   fn: (...args: TArgs) => Promise<TResult> | TResult,
@@ -50,68 +44,9 @@ function withErrorHandling<TArgs extends any[], TResult>(
   }
 }
 
-export const subscriptionHandler = <T>(
-  iteratorFactory: (signal?: AbortSignal) => AsyncIterable<T>,
-) =>
-  withErrorHandling(async function* ({ signal }: { signal?: AbortSignal }) {
-    for await (const payload of iteratorFactory(signal)) {
-      yield payload
-    }
-  })
-
 export function createVaultRouters(modules: Modules) {
-  const { UploadEvents } = modules
-  const uploadPublisher = new MemoryPublisher<{
-    startedInfo: UploadEventMap['started']
-    progressInfo: UploadEventMap['progress']
-    finishedInfo: UploadEventMap['finished']
-    abortedInfo: UploadEventMap['aborted']
-  }>()
-
-  UploadEvents.on('started', (payload) =>
-    uploadPublisher.publish('startedInfo', payload),
-  )
-  UploadEvents.on('progress', (payload) =>
-    uploadPublisher.publish('progressInfo', payload),
-  )
-  UploadEvents.on('finished', (payload) =>
-    uploadPublisher.publish('finishedInfo', payload),
-  )
-  UploadEvents.on('aborted', (payload) =>
-    uploadPublisher.publish('abortedInfo', payload),
-  )
-
   const usecases = createVaultUseCases(modules)
   return {
-    onUploadStarted: os
-      .output(eventIterator(startedEventSchema))
-      .handler(
-        subscriptionHandler((signal) =>
-          uploadPublisher.subscribe('startedInfo', { signal }),
-        ),
-      ),
-    onUploadProgress: os
-      .output(eventIterator(progressEventSchema))
-      .handler(
-        subscriptionHandler((signal) =>
-          uploadPublisher.subscribe('progressInfo', { signal }),
-        ),
-      ),
-    onUploadFinished: os
-      .output(eventIterator(finishedEventSchema))
-      .handler(
-        subscriptionHandler((signal) =>
-          uploadPublisher.subscribe('finishedInfo', { signal }),
-        ),
-      ),
-    onUploadAborted: os
-      .output(eventIterator(abortedEventSchema))
-      .handler(
-        subscriptionHandler((signal) =>
-          uploadPublisher.subscribe('abortedInfo', { signal }),
-        ),
-      ),
-
     get: os
       .output(getOutputSchema)
       .handler(withErrorHandling(() => usecases.getVaults.execute())),

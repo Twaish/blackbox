@@ -25,27 +25,6 @@ export const vaultFileSchema = z.object({
   fileId: fileIdSchema,
 })
 
-const uploadEvent = z.object({
-  uploadId: z.string(),
-})
-
-export const startedEventSchema = uploadEvent.extend({
-  filename: z.string(),
-  total: z.number().optional(),
-})
-
-export const progressEventSchema = uploadEvent.extend({
-  transferred: z.number(),
-  total: z.number().optional(),
-  percent: z.number().optional(),
-})
-
-export const finishedEventSchema = uploadEvent.extend({
-  fileId: fileIdSchema,
-})
-
-export const abortedEventSchema = uploadEvent
-
 export const getOutputSchema = z.array(vaultEntrySchema)
 
 export const createInputSchema = z.object({
