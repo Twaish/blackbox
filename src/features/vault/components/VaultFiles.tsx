@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
-import { hasSessionQueryOptions } from '../queries'
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
+import { existsQueryOptions, hasSessionQueryOptions } from '../queries'
 import { useVaultStore } from '../stores/useVaultStore'
 import { FileOverlay } from './blocks/FileOverlay'
 import { UnlockView } from './blocks/UnlockView'
@@ -7,11 +7,16 @@ import { FileListView } from './blocks/FileListView'
 import { FileGridView } from './blocks/FileGridView'
 import { VaultFilesContext } from '../contexts/useVaultFiles'
 import { useSettingsStore } from '../stores/useSettingsStore'
+import { ChangeLocationView } from './blocks/ChangeLocationView'
 
 export function VaultFiles() {
   const vaultId = useVaultStore((s) => s.selectedVaultId)
   const { data: hasSession } = useQuery({
     ...hasSessionQueryOptions(vaultId!),
+    enabled: !!vaultId,
+  })
+  const { data: exists = true } = useQuery({
+    ...existsQueryOptions(vaultId!),
     enabled: !!vaultId,
   })
   const viewStyle = useSettingsStore((s) => s.viewStyle)
@@ -22,8 +27,14 @@ export function VaultFiles() {
 
   return (
     <VaultFilesContext.Provider value={vaultId}>
-      {hasSession ? <FileView /> : <UnlockView />}
-      <FileOverlay />
+      {exists ? (
+        <>
+          {hasSession ? <FileView /> : <UnlockView />}
+          <FileOverlay />
+        </>
+      ) : (
+        <ChangeLocationView />
+      )}
     </VaultFilesContext.Provider>
   )
 }
