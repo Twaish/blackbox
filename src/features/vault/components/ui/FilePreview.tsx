@@ -51,99 +51,6 @@ function setCachedPreview(fileId: string, url: string) {
   evictIfNeeded()
 }
 
-async function createImagePreview(
-  blob: Blob,
-  size = 512,
-): Promise<Blob | null> {
-  const source = await createImageBitmap(blob)
-
-  try {
-    const scale = Math.max(size / source.width, size / source.height)
-
-    const scaledWidth = Math.ceil(source.width * scale)
-    const scaledHeight = Math.ceil(source.height * scale)
-
-    const canvas = document.createElement('canvas')
-    canvas.width = size
-    canvas.height = size
-
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return null
-
-    const offsetX = (size - scaledWidth) / 2
-    const offsetY = (size - scaledHeight) / 2
-
-    ctx.drawImage(source, offsetX, offsetY, scaledWidth, scaledHeight)
-
-    return await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob(resolve, 'image/webp', 0.82)
-    })
-  } finally {
-    source.close()
-  }
-}
-
-async function createVideoPreview(
-  blob: Blob,
-  size = 512,
-): Promise<Blob | null> {
-  const video = document.createElement('video')
-
-  video.muted = true
-  video.playsInline = true
-  video.preload = 'metadata'
-
-  const url = URL.createObjectURL(blob)
-  video.src = url
-
-  try {
-    await new Promise<void>((resolve, reject) => {
-      if (video.readyState >= 2) return resolve()
-      video.onloadedmetadata = () => resolve()
-      video.onerror = () => reject(video.error)
-    })
-
-    video.currentTime = Math.min(1, video.duration * 0.25)
-
-    await new Promise<void>((resolve, reject) => {
-      video.onseeked = () => resolve()
-      video.onerror = () => reject(video.error)
-    })
-
-    const scale = Math.max(size / video.videoWidth, size / video.videoHeight)
-
-    const scaledWidth = Math.ceil(video.videoWidth * scale)
-    const scaledHeight = Math.ceil(video.videoHeight * scale)
-
-    const canvas = document.createElement('canvas')
-    canvas.width = size
-    canvas.height = size
-
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return null
-
-    const offsetX = (size - scaledWidth) / 2
-    const offsetY = (size - scaledHeight) / 2
-
-    ctx.drawImage(video, offsetX, offsetY, scaledWidth, scaledHeight)
-
-    return await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob(resolve, 'image/webp', 0.82)
-    })
-  } finally {
-    URL.revokeObjectURL(url)
-
-    video.pause()
-    video.removeAttribute('src')
-    video.load()
-  }
-}
-
-async function createAudioPreview(blob: Blob): Promise<Blob | null> {
-  const buffer = await blob.arrayBuffer()
-  return parseID3v2(buffer) ?? parseMP4(buffer) ?? parseFlacOgg(buffer)
-}
-
 export const FilePreview = memo(function FilePreview({
   meta,
   vaultId,
@@ -152,6 +59,7 @@ export const FilePreview = memo(function FilePreview({
   vaultId: string
 }) {
   const shouldPreview = useSettingsStore((s) => s.shouldPreview)
+  const viewStyle = useSettingsStore((s) => s.viewStyle)
   const mime = meta.original.mime
   const isImage = mime.startsWith('image/')
   const isVideo = mime.startsWith('video/')
@@ -225,6 +133,107 @@ export const FilePreview = memo(function FilePreview({
 
   return <MimeIcon mimeType={mime} />
 })
+
+async function createImagePreview(
+  blob: Blob,
+  size = 384,
+): Promise<Blob | null> {
+  const source = await createImageBitmap(blob)
+
+  try {
+    const scale = Math.max(size / source.width, size / source.height)
+
+    const scaledWidth = Math.ceil(source.width * scale)
+    const scaledHeight = Math.ceil(source.height * scale)
+
+    const canvas = document.createElement('canvas')
+    canvas.width = size
+    canvas.height = size
+
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return null
+
+    const offsetX = (size - scaledWidth) / 2
+    const offsetY = (size - scaledHeight) / 2
+
+    ctx.drawImage(source, offsetX, offsetY, scaledWidth, scaledHeight)
+
+    return await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, 'image/webp', 0.82)
+    })
+  } finally {
+    source.close()
+  }
+}
+
+async function createVideoPreview(
+  blob: Blob,
+  size = 384,
+): Promise<Blob | null> {
+  const video = document.createElement('video')
+
+  video.muted = true
+  video.playsInline = true
+  video.preload = 'metadata'
+
+  const url = URL.createObjectURL(blob)
+  video.src = url
+
+  try {
+    await new Promise<void>((resolve, reject) => {
+      if (video.readyState >= 2) return resolve()
+      video.onloadedmetadata = () => resolve()
+      video.onerror = () => reject(video.error)
+    })
+
+    video.currentTime = Math.min(1, video.duration * 0.25)
+
+    await new Promise<void>((resolve, reject) => {
+      video.onseeked = () => resolve()
+      video.onerror = () => reject(video.error)
+    })
+
+    const scale = Math.max(size / video.videoWidth, size / video.videoHeight)
+
+    const scaledWidth = Math.ceil(video.videoWidth * scale)
+    const scaledHeight = Math.ceil(video.videoHeight * scale)
+
+    const canvas = document.createElement('canvas')
+    canvas.width = size
+    canvas.height = size
+
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return null
+
+    const offsetX = (size - scaledWidth) / 2
+    const offsetY = (size - scaledHeight) / 2
+
+    ctx.drawImage(video, offsetX, offsetY, scaledWidth, scaledHeight)
+
+    return await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, 'image/webp', 0.82)
+    })
+  } finally {
+    URL.revokeObjectURL(url)
+
+    video.pause()
+    video.removeAttribute('src')
+    video.load()
+  }
+}
+
+const MAX_METADATA_BYTES = 2 * 1024 * 1024
+async function createAudioPreview(
+  blob: Blob,
+  size = 384,
+): Promise<Blob | null> {
+  const buffer = await blob.slice(0, MAX_METADATA_BYTES).arrayBuffer()
+
+  const cover = parseID3v2(buffer) ?? parseMP4(buffer) ?? parseFlacOgg(buffer)
+  if (!cover) return null
+
+  return createImagePreview(cover, size)
+}
 
 function parseID3v2(buffer: ArrayBuffer): Blob | null {
   const view = new DataView(buffer)
@@ -367,6 +376,13 @@ function parseMP4(buffer: ArrayBuffer): Blob | null {
 
   const data = findAtom(bytes, 'data', covr + 8, covr + covrSize)
   if (data < 0) return null
+
+  // Validate bounds
+  const dataSize = view.getUint32(data)
+  if (dataSize < 16) return null
+
+  const dataEnd = data + dataSize
+  if (dataEnd > bytes.length) return null
 
   // data: [4 type flags][4 locale][image bytes]
   const typeFlag = view.getUint32(data + 8)
