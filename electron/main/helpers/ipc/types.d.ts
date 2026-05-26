@@ -6,8 +6,9 @@ import { ElectronWindow } from '@/core/ElectronWindow'
 import { ISettingsBuilder } from '@/app/settings/application/ports/ISettingsBuilder'
 import { ISettingsRegistry } from '@/app/settings/application/ports/ISettingsRegistry'
 import { VaultRegistry } from '@/features/vault/adapters/VaultRegistry'
-import { SessionStore } from '@/features/vault/adapters/SessionStore'
-import { UploadEvents } from '@/features/vault/adapters/UploadEvents'
+import { VaultSessions } from '@/features/vault/adapters/VaultSessions'
+import { ITaskService } from '@/app/tasks/application/interfaces/ITaskService'
+import { UploadManager } from '@/features/vault/adapters/UploadManager'
 
 declare interface Modules {
   ElectronWindow: ElectronWindow
@@ -17,6 +18,7 @@ declare interface Modules {
   SettingsRegistry: ISettingsRegistry
   VaultManager: IVaultManager
   VaultRegistry: VaultRegistry
-  SessionStore: SessionStore
-  UploadEvents: UploadEvents
+  VaultSessions: VaultSessions
+  TaskService: ITaskService
+  UploadManager: UploadManager
 }
