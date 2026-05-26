@@ -16,7 +16,7 @@ import RestoreAllVaultFiles from './restoreAllVaultFiles'
 
 export function createVaultUseCases({
   VaultRegistry,
-  SessionStore,
+  VaultSessions,
   VaultManager,
 }: Modules) {
   return {
@@ -24,8 +24,8 @@ export function createVaultUseCases({
     unlinkVault: new UnlinkVault(VaultRegistry),
     addExistingVault: new AddExistingVault(VaultRegistry),
 
-    hasVaultSession: new HasVaultSession(SessionStore),
-    removeVaultSession: new RemoveVaultSession(SessionStore),
+    hasVaultSession: new HasVaultSession(VaultSessions),
+    removeVaultSession: new RemoveVaultSession(VaultSessions),
 
     createVault: new CreateVault(VaultManager),
     renameVault: new RenameVault(VaultManager),

@@ -4,7 +4,7 @@ type VaultSession = {
   unlockedAt: number
 }
 
-export class SessionStore {
+export class VaultSessions {
   private sessions = new Map<string, VaultSession>()
 
   has(vaultId: string): boolean {
