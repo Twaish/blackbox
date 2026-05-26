@@ -51,6 +51,95 @@ function setCachedPreview(fileId: string, url: string) {
   evictIfNeeded()
 }
 
+async function createImagePreview(
+  blob: Blob,
+  size = 512,
+): Promise<Blob | null> {
+  const source = await createImageBitmap(blob)
+
+  try {
+    const scale = Math.max(size / source.width, size / source.height)
+
+    const scaledWidth = Math.ceil(source.width * scale)
+    const scaledHeight = Math.ceil(source.height * scale)
+
+    const canvas = document.createElement('canvas')
+    canvas.width = size
+    canvas.height = size
+
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return null
+
+    const offsetX = (size - scaledWidth) / 2
+    const offsetY = (size - scaledHeight) / 2
+
+    ctx.drawImage(source, offsetX, offsetY, scaledWidth, scaledHeight)
+
+    return await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, 'image/webp', 0.82)
+    })
+  } finally {
+    source.close()
+  }
+}
+
+async function createVideoPreview(
+  blob: Blob,
+  size = 512,
+): Promise<Blob | null> {
+  const video = document.createElement('video')
+
+  video.muted = true
+  video.playsInline = true
+  video.preload = 'metadata'
+  console.log('VIDEO PREVIEW')
+
+  const url = URL.createObjectURL(blob)
+  video.src = url
+
+  try {
+    await new Promise<void>((resolve, reject) => {
+      if (video.readyState >= 2) return resolve()
+      video.onloadedmetadata = () => resolve()
+      video.onerror = () => reject(video.error)
+    })
+
+    video.currentTime = Math.min(1, video.duration * 0.25)
+
+    await new Promise<void>((resolve, reject) => {
+      video.onseeked = () => resolve()
+      video.onerror = () => reject(video.error)
+    })
+
+    const scale = Math.max(size / video.videoWidth, size / video.videoHeight)
+
+    const scaledWidth = Math.ceil(video.videoWidth * scale)
+    const scaledHeight = Math.ceil(video.videoHeight * scale)
+
+    const canvas = document.createElement('canvas')
+    canvas.width = size
+    canvas.height = size
+
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return null
+
+    const offsetX = (size - scaledWidth) / 2
+    const offsetY = (size - scaledHeight) / 2
+
+    ctx.drawImage(video, offsetX, offsetY, scaledWidth, scaledHeight)
+
+    return await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, 'image/webp', 0.82)
+    })
+  } finally {
+    URL.revokeObjectURL(url)
+
+    video.pause()
+    video.removeAttribute('src')
+    video.load()
+  }
+}
+
 export const FilePreview = memo(function FilePreview({
   meta,
   vaultId,
@@ -61,6 +150,8 @@ export const FilePreview = memo(function FilePreview({
   const shouldPreview = useSettingsStore((s) => s.shouldPreview)
   const mime = meta.original.mime
   const isImage = mime.startsWith('image/')
+  const isVideo = mime.startsWith('video/')
+  const isPreviewable = mime.startsWith('image/') || mime.startsWith('video/')
 
   const fileId = meta.fileId
 
@@ -69,7 +160,7 @@ export const FilePreview = memo(function FilePreview({
   )
 
   useEffect(() => {
-    if (!isImage || !shouldPreview) return
+    if (!isPreviewable || !shouldPreview) return
 
     const cached = getCachedPreview(fileId)
 
@@ -90,35 +181,14 @@ export const FilePreview = memo(function FilePreview({
       async onDone(blob) {
         if (cancelled) return
 
-        const source = await createImageBitmap(blob)
-        const targetSize = 512
+        const previewBlob = isVideo
+          ? await createVideoPreview(blob)
+          : await createImagePreview(blob)
 
-        const scale = Math.max(
-          targetSize / source.width,
-          targetSize / source.height,
-        )
-        const scaledWidth = Math.ceil(source.width * scale)
-        const scaledHeight = Math.ceil(source.height * scale)
-
-        const canvas = document.createElement('canvas')
-        canvas.width = targetSize
-        canvas.height = targetSize
-
-        const ctx = canvas.getContext('2d')
-        if (!ctx) return
-
-        const offsetX = (targetSize - scaledWidth) / 2
-        const offsetY = (targetSize - scaledHeight) / 2
-        ctx.drawImage(source, offsetX, offsetY, scaledWidth, scaledHeight)
-
-        source.close()
-
-        const previewBlob = await new Promise<Blob | null>((resolve) => {
-          canvas.toBlob(resolve, 'image/webp', 0.82)
-        })
-        if (!previewBlob) return
+        if (!previewBlob || cancelled) return
 
         const objectUrl = URL.createObjectURL(previewBlob)
+
         setCachedPreview(fileId, objectUrl)
         setUrl(objectUrl)
       },
@@ -128,13 +198,13 @@ export const FilePreview = memo(function FilePreview({
       cancelled = true
       controller.abort()
     }
-  }, [fileId, vaultId, shouldPreview, isImage])
+  }, [fileId, vaultId, shouldPreview, isPreviewable])
 
   useEffect(() => {
     if (!shouldPreview) setUrl(null)
   }, [shouldPreview])
 
-  if (isImage && url) {
+  if (isPreviewable && url) {
     return (
       <img
         className="pointer-events-none h-full w-full object-cover"
