@@ -9,7 +9,7 @@ interface IVaultManager {
 
   addFile(args: { vaultId: string; filepath: string }): Promise<string>
 
-  deleteFile(args: { vaultId: string; fileId: string }): void
+  deleteFile(args: { vaultId: string; fileId: string }): Promise<void>
 
   streamFile(args: {
     vaultId: string
@@ -35,7 +35,4 @@ interface IVaultManager {
     mime: string
     size: number
   }): Promise<string>
-  uploadChunk(args: { streamId: string; chunk: ArrayBuffer }): Promise<void>
-  finishUpload(args: { streamId: string }): Promise<string>
-  abortUpload(args: { streamId: string }): Promise<void>
 }

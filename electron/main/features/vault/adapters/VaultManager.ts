@@ -4,21 +4,23 @@ import { access, mkdir, writeFile } from 'node:fs/promises'
 import { VaultPaths } from './VaultPaths'
 import { VaultCrypto } from './VaultCrypto'
 import { VaultRegistry } from './VaultRegistry'
-import { SessionStore } from './SessionStore'
+import { VaultSessions } from './VaultSessions'
 import { VaultFileStore } from './VaultFileStore'
-import { UploadStore } from './UploadStore'
 import path from 'node:path'
+import { ITaskService } from '@/app/tasks/application/interfaces/ITaskService'
+import { UploadManager } from './UploadManager'
 
 const ALGO = 'aes-256-gcm'
 
 export class VaultManager implements IVaultManager {
   constructor(
     private registry: VaultRegistry,
-    private sessions: SessionStore,
+    private sessions: VaultSessions,
     private files: VaultFileStore,
-    private uploads: UploadStore,
     private crypto: VaultCrypto,
     private paths: VaultPaths,
+    private tasks: ITaskService,
+    private uploadManager: UploadManager,
   ) {}
 
   async addFile({
@@ -30,7 +32,7 @@ export class VaultManager implements IVaultManager {
   }): Promise<string> {
     const vault = this.registry.get(vaultId)
     const session = this.sessions.get(vaultId)
-    return this.files.add(vault, session.key, filepath)
+    return await this.uploadManager.uploadFile(vault, session.key, filepath)
   }
 
   async readMeta({
@@ -89,19 +91,47 @@ export class VaultManager implements IVaultManager {
 
     const fileIds = this.files.list(vault)
 
-    for (const fileId of fileIds) {
-      const meta = await this.files.readMeta(vault, session.key, fileId)
+    const task = this.tasks.startTask({
+      label: `Exporting ${vault.name}`,
+      description: 'Exporting files from vault ',
+    })
 
-      const outputPath = await this.getUniqueRestorePath(
-        outputDir,
-        meta.original.name,
-      )
+    try {
+      const total = fileIds.length
+      for (let i = 0; i < total; i++) {
+        const fileId = fileIds[i]
+        const meta = await this.files.readMeta(vault, session.key, fileId)
 
-      await mkdir(path.dirname(outputPath), { recursive: true })
+        this.tasks.updateTaskProgress({
+          id: task.id,
+          progress: Math.round((i / total) * 100),
+          description: `Exporting ${meta.original.name} (${i + 1}/${total})`,
+        })
 
-      const fileBuffer = await this.files.read(vault, session.key, fileId)
+        const outputPath = await this.getUniqueRestorePath(
+          outputDir,
+          meta.original.name,
+        )
 
-      await writeFile(outputPath, fileBuffer)
+        await mkdir(path.dirname(outputPath), {
+          recursive: true,
+        })
+
+        const fileBuffer = await this.files.read(vault, session.key, fileId)
+
+        await writeFile(outputPath, fileBuffer)
+      }
+
+      this.tasks.updateTaskProgress({
+        id: task.id,
+        progress: 100,
+        description: `Export completed`,
+      })
+
+      this.tasks.finishTask(task.id)
+    } catch (error) {
+      this.tasks.abortTask(task.id)
+      throw error
     }
   }
   private async getUniqueRestorePath(
@@ -132,9 +162,15 @@ export class VaultManager implements IVaultManager {
     }
   }
 
-  deleteFile({ vaultId, fileId }: { vaultId: string; fileId: string }): void {
+  async deleteFile({
+    vaultId,
+    fileId,
+  }: {
+    vaultId: string
+    fileId: string
+  }): Promise<void> {
     const vault = this.registry.get(vaultId)
-    this.files.delete(vault, fileId)
+    await this.files.delete(vault, fileId)
   }
 
   async createVault({
@@ -219,37 +255,14 @@ export class VaultManager implements IVaultManager {
   }): Promise<string> {
     const vault = this.registry.get(vaultId)
     const session = this.sessions.get(vaultId)
-    return await this.uploads.start(
-      streamId,
+    return await this.uploadManager.createUpload({
+      uploadId: streamId,
       vault,
-      session.key,
+      key: session.key,
       name,
       mime,
       size,
-    )
-  }
-
-  async uploadChunk({
-    streamId,
-    chunk,
-  }: {
-    streamId: string
-    chunk: ArrayBuffer
-  }): Promise<void> {
-    await this.uploads.chunk(streamId, chunk)
-  }
-
-  async finishUpload({ streamId }: { streamId: string }): Promise<string> {
-    const upload = this.uploads.get(streamId)
-    const vault = this.registry.get(upload.vaultId)
-    const session = this.sessions.get(upload.vaultId)
-    return await this.uploads.finish(streamId, vault, session.key)
-  }
-
-  async abortUpload({ streamId }: { streamId: string }): Promise<void> {
-    const upload = this.uploads.get(streamId)
-    const vault = this.registry.get(upload.vaultId)
-    this.uploads.abort(streamId, vault)
+    })
   }
 
   private createKeyCheck(key: Buffer): VaultManifest['crypto']['keyCheck'] {
