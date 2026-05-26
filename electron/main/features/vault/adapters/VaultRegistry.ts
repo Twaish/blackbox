@@ -64,4 +64,14 @@ export class VaultRegistry {
       throw new Error(`Manifest not found for vault at ${vaultPath}`)
     return JSON.parse(await readFile(manifestPath, 'utf-8'))
   }
+
+  async vaultExists(vaultId: string): Promise<boolean> {
+    const vault = this.settings.vaults.find((v) => v.id === vaultId)
+    if (!vault) return false
+
+    if (!existsSync(vault.location)) return false
+
+    const manifestPath = this.paths.manifest(vault.location)
+    return existsSync(manifestPath)
+  }
 }

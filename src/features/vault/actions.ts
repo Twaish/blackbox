@@ -134,6 +134,10 @@ export async function hasSession(vaultId: string): Promise<boolean> {
   return await ipc.client.vaults.hasSession(vaultId)
 }
 
+export async function vaultExists(vaultId: string): Promise<boolean> {
+  return await ipc.client.vaults.exists(vaultId)
+}
+
 export async function removeSession(vaultId: string) {
   return await ipc.client.vaults.removeSession(vaultId)
 }

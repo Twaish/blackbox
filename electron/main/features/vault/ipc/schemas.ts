@@ -27,6 +27,8 @@ export const vaultFileSchema = z.object({
 
 export const getOutputSchema = z.array(vaultEntrySchema)
 
+export const vaultExistsOutputSchema = z.boolean()
+
 export const createInputSchema = z.object({
   location: z.string(),
   name: z.string(),

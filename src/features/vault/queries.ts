@@ -4,6 +4,7 @@ import {
   getVaults,
   hasSession,
   readVaultFileMeta,
+  vaultExists,
 } from './actions'
 
 export const queryKeys = {
@@ -16,6 +17,7 @@ export const queryKeys = {
     'meta',
   ],
   hasSession: (vaultId: string) => [...queryKeys.all(), 'hasSession', vaultId],
+  exists: (vaultId: string) => [...queryKeys.all(), 'exists', vaultId],
 
   // Settings
   settings: () => ['settings'],
@@ -48,4 +50,10 @@ export const hasSessionQueryOptions = (vaultId: string) =>
   queryOptions({
     queryKey: queryKeys.hasSession(vaultId),
     queryFn: () => hasSession(vaultId),
+  })
+
+export const existsQueryOptions = (vaultId: string) =>
+  queryOptions({
+    queryKey: queryKeys.exists(vaultId),
+    queryFn: () => vaultExists(vaultId),
   })

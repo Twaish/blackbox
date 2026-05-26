@@ -9,6 +9,7 @@ import { VaultFileStore } from './VaultFileStore'
 import path from 'node:path'
 import { ITaskService } from '@/app/tasks/application/interfaces/ITaskService'
 import { UploadManager } from './UploadManager'
+import { existsSync } from 'node:fs'
 
 const ALGO = 'aes-256-gcm'
 
@@ -145,9 +146,7 @@ export class VaultManager implements IVaultManager {
     let counter = 1
 
     while (await this.pathExists(candidate)) {
-      candidate = path.join(outputDir, `${base} (${counter})${ext}`)
-
-      counter++
+      candidate = path.join(outputDir, `${base} (${counter++})${ext}`)
     }
 
     return candidate
@@ -183,6 +182,10 @@ export class VaultManager implements IVaultManager {
     passphrase: string
   }): Promise<void> {
     const vaultPath = join(location, name)
+
+    if (existsSync(vaultPath)) {
+      throw new Error(`Vault at path ${vaultPath} already exists`)
+    }
 
     await mkdir(vaultPath, { recursive: true })
     await Promise.all([

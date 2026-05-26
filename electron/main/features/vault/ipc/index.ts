@@ -11,6 +11,7 @@ import {
   restoreAllFilesInputSchema,
   restoreFileSchema,
   unlockInputSchema,
+  vaultExistsOutputSchema,
   vaultFileMetaSchema,
   vaultFileSchema,
   vaultIdSchema,
@@ -61,6 +62,12 @@ export function createVaultRouters(modules: Modules) {
         withErrorHandling(({ input }) =>
           usecases.addExistingVault.execute(input),
         ),
+      ),
+    exists: os
+      .input(vaultIdSchema)
+      .output(vaultExistsOutputSchema)
+      .handler(
+        withErrorHandling(({ input }) => usecases.vaultExists.execute(input)),
       ),
 
     hasSession: os
