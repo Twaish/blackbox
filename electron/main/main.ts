@@ -16,13 +16,12 @@ import { SettingsBuilder } from './app/settings/infrastructure/adapters/Settings
 import { SettingsRegistry } from './app/settings/infrastructure/adapters/SettingsRegistry'
 import { VaultManager } from './features/vault/adapters/VaultManager'
 import { VaultRegistry } from './features/vault/adapters/VaultRegistry'
-import { SessionStore } from './features/vault/adapters/SessionStore'
+import { VaultSessions } from './features/vault/adapters/VaultSessions'
 import { VaultFileStore } from './features/vault/adapters/VaultFileStore'
-import { UploadStore } from './features/vault/adapters/UploadStore'
-import { EncryptedJsonStore } from './features/vault/adapters/EncryptedJsonStore'
 import { VaultCrypto } from './features/vault/adapters/VaultCrypto'
 import { VaultPaths } from './features/vault/adapters/VaultPaths'
-import { UploadEvents } from './features/vault/adapters/UploadEvents'
+import { TaskService } from './app/tasks/application/services/TaskService'
+import { UploadManager } from './features/vault/adapters/UploadManager'
 
 app.commandLine.appendSwitch('trace-warnings')
 app.whenReady().then(async () => {
@@ -48,34 +47,28 @@ app.whenReady().then(async () => {
       settingsRegistry,
     )
 
-    const uploadEvents = new UploadEvents()
+    const taskService = new TaskService()
+
     const vaultPaths = new VaultPaths()
     const vaultCrypto = new VaultCrypto()
-    const sessionStore = new SessionStore()
-
-    const encryptedJsonStore = new EncryptedJsonStore(vaultCrypto)
-    const vaultFileStore = new VaultFileStore(
-      encryptedJsonStore,
-      vaultCrypto,
-      vaultPaths,
-      uploadEvents,
-    )
-    const uploadStore = new UploadStore(
-      encryptedJsonStore,
-      vaultCrypto,
-      vaultPaths,
-      vaultFileStore,
-      uploadEvents,
-    )
-
+    const vaultSessions = new VaultSessions()
     const vaultRegistry = new VaultRegistry(settingsBuilder, vaultPaths)
+    const vaultFileStore = new VaultFileStore(vaultCrypto, vaultPaths)
+
+    const uploadManager = new UploadManager(
+      vaultCrypto,
+      vaultPaths,
+      taskService,
+    )
+
     const vaultManager = new VaultManager(
       vaultRegistry,
-      sessionStore,
+      vaultSessions,
       vaultFileStore,
-      uploadStore,
       vaultCrypto,
       vaultPaths,
+      taskService,
+      uploadManager,
     )
 
     const mainWindow = new ElectronWindow()
@@ -86,17 +79,19 @@ app.whenReady().then(async () => {
 
       SettingsBuilder: settingsBuilder,
       SettingsRegistry: settingsRegistry,
+      TaskService: taskService,
 
       VaultManager: vaultManager,
       VaultRegistry: vaultRegistry,
-      SessionStore: sessionStore,
-
-      UploadEvents: uploadEvents,
+      VaultSessions: vaultSessions,
+      UploadManager: uploadManager,
     }
 
     app.on('before-quit', async () => {
       await settingsRegistry.flushAll()
     })
+
+    taskService.on('error', (err) => console.error(err))
 
     await vaultRegistry.init()
 
