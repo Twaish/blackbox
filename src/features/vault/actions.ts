@@ -53,7 +53,9 @@ export async function streamVaultFile({
       }
 
       if (onDone) {
-        onDone(new Blob(chunks as BlobPart[]))
+        const blob = new Blob(chunks as BlobPart[])
+        chunks.length = 0
+        onDone(blob)
       }
     },
   })
