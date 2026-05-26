@@ -28,9 +28,9 @@ type StreamState = {
 const streams = new Map<string, StreamState>()
 const abortControllers = new Map<string, AbortController>()
 
-function cleanupStream(id: string) {
-  streams.delete(id)
-  abortControllers.delete(id)
+function cleanupStream(streamId: string) {
+  streams.delete(streamId)
+  abortControllers.delete(streamId)
 }
 
 function abortStream(streamId: string) {
@@ -103,14 +103,12 @@ function uploadVaultFile(
   const { promise, resolve, reject } = deferred()
 
   const abortController = new AbortController()
-
-  streams.set(streamId, { resolve, reject })
   abortControllers.set(streamId, abortController)
 
   ipcRenderer
     .invoke('upload:start', { streamId, vaultId, name, mime, size })
     .then(async () => {
-      const CHUNK_SIZE = 1024 * 1024
+      const CHUNK_SIZE = 1024 * 1024 * 10
       let offset = 0
 
       try {
@@ -124,7 +122,6 @@ function uploadVaultFile(
 
           offset += CHUNK_SIZE
         }
-
         const fileId = await ipcRenderer.invoke('upload:finish', streamId)
         resolve(fileId)
       } catch (err) {
