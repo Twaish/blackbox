@@ -1,0 +1,28 @@
+.range {
+  --height: calc(var(--spacing) * 1.25);
+  --percent: calc(var(--value) * 100%);
+  --track-bg: color-mix(in oklab, var(--secondary) 25%, transparent);
+
+  background: linear-gradient(
+    to right,
+    white 0%,
+    white var(--percent),
+    var(--track-bg) var(--percent),
+    var(--track-bg) 100%
+  );
+}
+
+.range::-webkit-slider-runnable-track {
+  background-color: color-mix(in oklab, var(--secondary) 25%, transparent);
+  border-radius: calc(infinity * 1px);
+  appearance: none;
+  color: white;
+  height: var(--height);
+  margin: 0;
+}
+
+.range::-webkit-slider-thumb {
+  height: var(--height);
+  width: var(--height);
+  appearance: none;
+}
