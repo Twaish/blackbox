@@ -63,7 +63,7 @@
     "dotenv": "^17.2.3",
     "file-type": "^22.0.1",
     "immer": "^10.1.1",
-    "lucide-react": "^0.503.0",
+    "lucide-react": "^1.16.0",
     "mime-types": "^3.0.2",
     "radix-ui": "^1.4.3",
     "react": "^19.1.0",
