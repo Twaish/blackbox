@@ -1,4 +1,11 @@
-import { ComponentProps, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  ComponentProps,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { cn } from '@/utils/tailwind'
 import { streamVaultFile } from '../../actions'
 import {
@@ -255,6 +262,12 @@ function AudioContent({
 
     return `${minutes}:${seconds.toString().padStart(2, '0')}`
   }
+
+  useLayoutEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume
+    }
+  }, [])
 
   const VolumeIcon = useMemo(() => {
     if (isMuted) return VolumeOff
