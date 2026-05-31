@@ -1,6 +1,6 @@
 type VaultSession = {
   vaultId: string
-  key: Buffer
+  dek: Buffer
   unlockedAt: number
 }
 
@@ -17,8 +17,8 @@ export class VaultSessions {
     return session
   }
 
-  set(vaultId: string, key: Buffer): void {
-    this.sessions.set(vaultId, { vaultId, key, unlockedAt: Date.now() })
+  set(vaultId: string, dek: Buffer): void {
+    this.sessions.set(vaultId, { vaultId, dek, unlockedAt: Date.now() })
   }
 
   remove(vaultId: string): void {

@@ -3,10 +3,6 @@ type VaultManifest = {
   name: string
   crypto: {
     salt: string
-    keyCheck: {
-      iv: string
-      data: string
-      tag: string
-    }
+    encryptedDek: string
   }
 }

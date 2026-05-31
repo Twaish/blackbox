@@ -15,6 +15,10 @@ export class VaultCrypto {
     return scryptSync(passphrase, salt, KEY_LENGTH)
   }
 
+  generateKey(): Buffer {
+    return randomBytes(KEY_LENGTH)
+  }
+
   encrypt(data: Buffer, key: Buffer): Buffer {
     const iv = randomBytes(IV_LENGTH)
     const cipher = createCipheriv(ALGO, key, iv)

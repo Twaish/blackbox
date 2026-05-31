@@ -6,6 +6,11 @@ interface IVaultManager {
   }): Promise<void>
   unlockVault(args: { vaultId: string; passphrase: string }): Promise<void>
   renameVault(args: { vaultId: string; name: string }): Promise<void>
+  changePassphrase(args: {
+    vaultId: string
+    oldPassphrase: string
+    newPassphrase: string
+  }): Promise<void>
 
   addFile(args: { vaultId: string; filepath: string }): Promise<string>
 

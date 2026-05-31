@@ -15,6 +15,7 @@ import RenameVault from './renameVault'
 import RestoreAllVaultFiles from './restoreAllVaultFiles'
 import VaultExists from './vaultExists'
 import ChangeVaultLocation from './changeVaultLocation'
+import ChangePassphrase from './changePassphrase'
 
 export function createVaultUseCases({
   VaultRegistry,
@@ -40,5 +41,6 @@ export function createVaultUseCases({
     restoreAllVaultFiles: new RestoreAllVaultFiles(VaultManager),
     getVaultFiles: new GetVaultFiles(VaultManager),
     unlockVault: new UnlockVault(VaultManager),
+    changePassphrase: new ChangePassphrase(VaultManager),
   }
 }

@@ -1,4 +1,4 @@
-import { randomUUID, randomBytes, createDecipheriv } from 'node:crypto'
+import { randomUUID, randomBytes } from 'node:crypto'
 import { join } from 'path'
 import { access, mkdir, writeFile } from 'node:fs/promises'
 import { VaultPaths } from './VaultPaths'
@@ -10,8 +10,6 @@ import path from 'node:path'
 import { ITaskService } from '@/app/tasks/application/interfaces/ITaskService'
 import { UploadManager } from './UploadManager'
 import { existsSync } from 'node:fs'
-
-const ALGO = 'aes-256-gcm'
 
 export class VaultManager implements IVaultManager {
   constructor(
@@ -33,7 +31,7 @@ export class VaultManager implements IVaultManager {
   }): Promise<string> {
     const vault = this.registry.get(vaultId)
     const session = this.sessions.get(vaultId)
-    return await this.uploadManager.uploadFile(vault, session.key, filepath)
+    return await this.uploadManager.uploadFile(vault, session.dek, filepath)
   }
 
   async readMeta({
@@ -45,7 +43,7 @@ export class VaultManager implements IVaultManager {
   }): Promise<VaultFileMeta> {
     const vault = this.registry.get(vaultId)
     const session = this.sessions.get(vaultId)
-    return this.files.readMeta(vault, session.key, fileId)
+    return this.files.readMeta(vault, session.dek, fileId)
   }
 
   async *streamFile({
@@ -59,7 +57,7 @@ export class VaultManager implements IVaultManager {
   }): AsyncGenerator<Uint8Array> {
     const vault = this.registry.get(vaultId)
     const session = this.sessions.get(vaultId)
-    const stream = this.files.stream(vault, session.key, fileId, signal)
+    const stream = this.files.stream(vault, session.dek, fileId, signal)
     for await (const chunk of stream) {
       if (signal?.aborted) break
       yield chunk
@@ -77,7 +75,7 @@ export class VaultManager implements IVaultManager {
   }): Promise<void> {
     const vault = this.registry.get(vaultId)
     const session = this.sessions.get(vaultId)
-    const fileBuffer = await this.files.read(vault, session.key, fileId)
+    const fileBuffer = await this.files.read(vault, session.dek, fileId)
     await writeFile(outputFilepath, fileBuffer)
   }
   async restoreAllFiles({
@@ -101,7 +99,7 @@ export class VaultManager implements IVaultManager {
       const total = fileIds.length
       for (let i = 0; i < total; i++) {
         const fileId = fileIds[i]
-        const meta = await this.files.readMeta(vault, session.key, fileId)
+        const meta = await this.files.readMeta(vault, session.dek, fileId)
 
         this.tasks.updateTaskProgress({
           id: task.id,
@@ -118,7 +116,7 @@ export class VaultManager implements IVaultManager {
           recursive: true,
         })
 
-        const fileBuffer = await this.files.read(vault, session.key, fileId)
+        const fileBuffer = await this.files.read(vault, session.dek, fileId)
 
         await writeFile(outputPath, fileBuffer)
       }
@@ -194,8 +192,11 @@ export class VaultManager implements IVaultManager {
     ])
 
     const salt = randomBytes(16)
+    const kek = this.crypto.deriveKey(passphrase, salt)
+    const dek = this.crypto.generateKey()
+    const encryptedDek = this.crypto.encrypt(dek, kek)
+
     const key = this.crypto.deriveKey(passphrase, salt)
-    const keyCheck = this.createKeyCheck(key)
 
     const id = randomUUID()
     const manifest: VaultManifest = {
@@ -203,7 +204,7 @@ export class VaultManager implements IVaultManager {
       name,
       crypto: {
         salt: salt.toString('base64'),
-        keyCheck,
+        encryptedDek: encryptedDek.toString('base64'),
       },
     }
 
@@ -223,8 +224,8 @@ export class VaultManager implements IVaultManager {
     vaultId: string
     passphrase: string
   }): Promise<void> {
-    const key = await this.getVerifiedKey(vaultId, passphrase)
-    this.sessions.set(vaultId, key)
+    const dek = await this.unlockDek(vaultId, passphrase)
+    this.sessions.set(vaultId, dek)
   }
 
   async renameVault({ vaultId, name }: { vaultId: string; name: string }) {
@@ -261,25 +262,50 @@ export class VaultManager implements IVaultManager {
     return await this.uploadManager.createUpload({
       uploadId: streamId,
       vault,
-      key: session.key,
+      key: session.dek,
       name,
       mime,
       size,
     })
   }
 
-  private createKeyCheck(key: Buffer): VaultManifest['crypto']['keyCheck'] {
-    const { iv, cipher } = this.crypto.createEncryptionStream(key)
-    const plain = Buffer.from('vault-check', 'utf8')
-    const data = Buffer.concat([cipher.update(plain), cipher.final()])
-    return {
-      iv: iv.toString('base64'),
-      data: data.toString('base64'),
-      tag: cipher.getAuthTag().toString('base64'),
+  async changePassphrase({
+    vaultId,
+    oldPassphrase,
+    newPassphrase,
+  }: {
+    vaultId: string
+    oldPassphrase: string
+    newPassphrase: string
+  }): Promise<void> {
+    const vault = this.registry.get(vaultId)
+    const manifest = await this.registry.getManifest(vault.location)
+
+    const oldSalt = Buffer.from(manifest.crypto.salt, 'base64')
+    const oldKek = this.crypto.deriveKey(oldPassphrase, oldSalt)
+
+    const dek = this.crypto.decrypt(
+      Buffer.from(manifest.crypto.encryptedDek, 'base64'),
+      oldKek,
+    )
+
+    const newSalt = randomBytes(16)
+    const newKek = this.crypto.deriveKey(newPassphrase, newSalt)
+    const encryptedDek = this.crypto.encrypt(dek, newKek)
+
+    manifest.crypto = {
+      salt: newSalt.toString('base64'),
+      encryptedDek: encryptedDek.toString('base64'),
     }
+
+    await writeFile(
+      this.paths.manifest(vault.location),
+      JSON.stringify(manifest, null, 2),
+      'utf8',
+    )
   }
 
-  private async getVerifiedKey(
+  private async unlockDek(
     vaultId: string,
     passphrase: string,
   ): Promise<Buffer> {
@@ -287,21 +313,11 @@ export class VaultManager implements IVaultManager {
     const manifest = await this.registry.getManifest(vault.location)
 
     const salt = Buffer.from(manifest.crypto.salt, 'base64')
-    const key = this.crypto.deriveKey(passphrase, salt)
-    const check = manifest.crypto.keyCheck
-
-    const iv = Buffer.from(check.iv, 'base64')
-    const data = Buffer.from(check.data, 'base64')
-    const tag = Buffer.from(check.tag, 'base64')
+    const kek = this.crypto.deriveKey(passphrase, salt)
+    const encryptedDek = Buffer.from(manifest.crypto.encryptedDek, 'base64')
 
     try {
-      const decipher = createDecipheriv(ALGO, key, iv)
-      decipher.setAuthTag(tag)
-
-      const decrypted = Buffer.concat([decipher.update(data), decipher.final()])
-      if (decrypted.toString('utf8') !== 'vault-check') throw new Error()
-
-      return key
+      return this.crypto.decrypt(encryptedDek, kek)
     } catch {
       throw new Error('Invalid passphrase')
     }
