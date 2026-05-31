@@ -64,7 +64,9 @@ export function UploadOverlay() {
       const files = e.dataTransfer?.files
       if (!files || files.length === 0 || !vaultId) return
 
-      upload(files[0])
+      for (const file of files) {
+        upload(file)
+      }
     }
 
     window.addEventListener('paste', onPaste)
