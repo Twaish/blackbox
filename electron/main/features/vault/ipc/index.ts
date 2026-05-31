@@ -3,6 +3,7 @@ import { ORPCError, os } from '@orpc/server'
 import {
   addFileInputSchema,
   changeLocationInputSchema,
+  changePassphraseInputSchema,
   createInputSchema,
   fileIdSchema,
   getFilesOutputSchema,
@@ -148,6 +149,13 @@ export function createVaultRouters(modules: Modules) {
       .input(unlockInputSchema)
       .handler(
         withErrorHandling(({ input }) => usecases.unlockVault.execute(input)),
+      ),
+    changePassphrase: os
+      .input(changePassphraseInputSchema)
+      .handler(
+        withErrorHandling(({ input }) =>
+          usecases.changePassphrase.execute(input),
+        ),
       ),
   }
 }

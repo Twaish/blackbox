@@ -64,3 +64,9 @@ export const unlockInputSchema = z.object({
   vaultId: vaultIdSchema,
   passphrase: passphraseSchema,
 })
+
+export const changePassphraseInputSchema = z.object({
+  vaultId: vaultIdSchema,
+  oldPassphrase: passphraseSchema,
+  newPassphrase: passphraseSchema,
+})
