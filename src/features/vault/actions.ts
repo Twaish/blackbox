@@ -158,6 +158,18 @@ export async function unlockVault(vaultId: string, passphrase: string) {
   })
 }
 
+export async function changePassphrase(
+  vaultId: string,
+  oldPassphrase: string,
+  newPassphrase: string,
+) {
+  return await ipc.client.vaults.changePassphrase({
+    vaultId,
+    oldPassphrase,
+    newPassphrase,
+  })
+}
+
 export async function unlinkVault(vaultId: string) {
   return await ipc.client.vaults.unlink(vaultId)
 }

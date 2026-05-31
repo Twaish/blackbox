@@ -8,6 +8,7 @@ import {
   ChevronDown,
   FolderOpen,
   FolderPen,
+  Hash,
   Lock,
   LockOpen,
   LogOut,
@@ -26,7 +27,12 @@ import { Highlight } from '@/components/Highlight'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { openFolder, selectFolder } from '@/app/instance/actions'
-import { useRemoveSession, useRenameVault, useUnlinkVault } from '../mutations'
+import {
+  useChangePassphrase,
+  useRemoveSession,
+  useRenameVault,
+  useUnlinkVault,
+} from '../mutations'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,6 +41,7 @@ import {
 import { useConfirmationDialog } from '@/components/confirmation-dialog/useConfirmationDialog'
 import { useRenameVaultDialog } from '../hooks/useRenameVaultDialog'
 import { restoreAllVaultFiles } from '../actions'
+import { useChangePassphraseDialog } from '../hooks/useChangePassphraseDialog'
 
 type VaultSelectorStore = {
   vault?: VaultEntry
@@ -258,6 +265,7 @@ VaultItem.Options = function Options({ vault }: { vault: VaultEntry }) {
   const { mutate: unlinkVault } = useUnlinkVault()
   const { mutate: renameVault } = useRenameVault(vault.id)
   const { mutate: removeSession } = useRemoveSession(vault.id)
+  const { mutateAsync: changePassphrase } = useChangePassphrase(vault.id)
   const { data: hasSession } = useQuery(hasSessionQueryOptions(vault.id))
   const { confirm: confirmUnlink } = useConfirmationDialog({
     onConfirm: () => {
@@ -270,6 +278,9 @@ VaultItem.Options = function Options({ vault }: { vault: VaultEntry }) {
   const { rename } = useRenameVaultDialog({
     onRename: (name) => renameVault(name),
     defaultName: vault.name,
+  })
+  const { changePassphrase: updatePassphrase } = useChangePassphraseDialog({
+    onSubmit: async (passphrases) => changePassphrase(passphrases),
   })
 
   const handleOpenFolder = () => {
@@ -292,6 +303,11 @@ VaultItem.Options = function Options({ vault }: { vault: VaultEntry }) {
 
   const handleRenameVault = async () => {
     rename()
+    setOpen(false)
+  }
+
+  const handleChangePassphrase = async () => {
+    updatePassphrase()
     setOpen(false)
   }
 
@@ -322,6 +338,18 @@ VaultItem.Options = function Options({ vault }: { vault: VaultEntry }) {
             <OptionButton.Title>Rename vault</OptionButton.Title>
             <OptionButton.Description>
               Change the name of this vault
+            </OptionButton.Description>
+          </OptionButton.Details>
+        </OptionButton>
+
+        <OptionButton onClick={noProp(handleChangePassphrase)}>
+          <OptionButton.Icon>
+            <Hash className="h-4 w-4" />
+          </OptionButton.Icon>
+          <OptionButton.Details>
+            <OptionButton.Title>Change passphrase</OptionButton.Title>
+            <OptionButton.Description>
+              Change the passphrase used to open this vault
             </OptionButton.Description>
           </OptionButton.Details>
         </OptionButton>
@@ -439,7 +467,6 @@ OptionButton.Description = function Description({
   children,
   ...props
 }: ComponentProps<'span'>) {
-  // return null
   return (
     <span className={cn('text-muted-foreground text-xs', className)} {...props}>
       {children}

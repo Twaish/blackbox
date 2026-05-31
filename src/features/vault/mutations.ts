@@ -2,6 +2,7 @@ import { useMutation } from '@tanstack/react-query'
 import {
   addExistingVault,
   addVaultFile,
+  changePassphrase,
   changeVaultLocation,
   createVault,
   deleteVaultFile,
@@ -104,6 +105,22 @@ export const useRenameVault = (vaultId: string) =>
 export const useChangeVaultLocation = (vaultId: string) =>
   useMutation({
     mutationFn: (location: string) => changeVaultLocation(vaultId, location),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.all(),
+      })
+    },
+  })
+
+export const useChangePassphrase = (vaultId: string) =>
+  useMutation({
+    mutationFn: ({
+      oldPassphrase,
+      newPassphrase,
+    }: {
+      oldPassphrase: string
+      newPassphrase: string
+    }) => changePassphrase(vaultId, oldPassphrase, newPassphrase),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.all(),
