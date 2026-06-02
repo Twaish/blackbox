@@ -14,6 +14,7 @@ import {
 } from './actions'
 import { queryClient } from '@/core/queryClient'
 import { queryKeys } from './queries'
+import { useVaultFilesStore } from './stores/useVaultFilesStore'
 
 export const useUnlockVault = (vaultId: string) =>
   useMutation({
@@ -63,10 +64,13 @@ export const useRemoveVaultFile = (vaultId: string) =>
 export const useUploadVaultFileStream = (vaultId: string) =>
   useMutation({
     mutationFn: (file: File) => uploadVaultFile(vaultId, file),
-    onSuccess: () =>
+    onSuccess: (fileId: string | undefined) => {
+      if (!fileId) return
+      useVaultFilesStore.getState().markNewFile(fileId)
       queryClient.invalidateQueries({
         queryKey: queryKeys.getFiles(vaultId),
-      }),
+      })
+    },
   })
 
 export const useRemoveSession = (vaultId: string) =>

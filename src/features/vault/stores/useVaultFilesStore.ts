@@ -2,6 +2,7 @@ import { create } from 'zustand'
 
 type VaultFilesStore = {
   files: string[]
+  newFileIds: Set<string>
   selectedFileId?: string
   selectedVaultId?: string
 
@@ -10,10 +11,14 @@ type VaultFilesStore = {
 
   selectNext: () => void
   selectPrev: () => void
+
+  markNewFile: (fileId: string) => void
+  clearNewFile: (fileId: string) => void
 }
 
 export const useVaultFilesStore = create<VaultFilesStore>((set, get) => ({
   files: [],
+  newFileIds: new Set<string>(),
   selectedFileId: undefined,
   selectedVaultId: undefined,
 
@@ -46,5 +51,19 @@ export const useVaultFilesStore = create<VaultFilesStore>((set, get) => ({
     if (prev) {
       set({ selectedFileId: prev })
     }
+  },
+
+  markNewFile: (fileId: string) => {
+    set((state) => ({
+      newFileIds: new Set([...state.newFileIds, fileId]),
+    }))
+  },
+  clearNewFile: (fileId: string) => {
+    set((state) => {
+      const newFileIds = new Set(state.newFileIds)
+      newFileIds.delete(fileId)
+
+      return { newFileIds }
+    })
   },
 }))

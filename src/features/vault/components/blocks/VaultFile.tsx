@@ -4,9 +4,9 @@ import { readVaultFileMetaQueryOptions } from '../../queries'
 import { FileHeader } from '../ui/FileHeader'
 import { FilePreview } from '../ui/FilePreview'
 import { memo, useCallback } from 'react'
-import { ViewStyle } from '../../actions'
 import { useVaultFiles } from '../../contexts/useVaultFiles'
 import { useVaultFilesStore } from '../../stores/useVaultFilesStore'
+import { ViewStyle } from '../../stores/useSettingsStore'
 
 export const VaultFile = memo(function VaultFile({
   fileId,
@@ -19,6 +19,7 @@ export const VaultFile = memo(function VaultFile({
   const { data: meta } = useQuery(
     readVaultFileMetaQueryOptions(vaultId, fileId),
   )
+  const isNew = useVaultFilesStore((s) => s.newFileIds.has(fileId))
   const setSelectedFileId = useVaultFilesStore((s) => s.setSelectedFileId)
 
   const handleClick = useCallback(() => {
@@ -30,13 +31,18 @@ export const VaultFile = memo(function VaultFile({
   return (
     <button
       className={cn(
-        'flex overflow-hidden border',
+        'relative flex overflow-hidden border',
         viewStyle === 'grid'
           ? 'h-80 flex-col'
           : 'h-12 w-full items-center gap-2',
       )}
       onClick={handleClick}
     >
+      {isNew && (
+        <div className="absolute top-0 right-0 m-2 rounded-sm bg-green-900/75 px-1 font-mono text-[11px] text-green-500 uppercase">
+          New
+        </div>
+      )}
       <div
         className={cn(
           'flex items-center justify-center overflow-hidden',
