@@ -128,8 +128,11 @@ export async function restoreAllVaultFiles(
   })
 }
 
-export async function getVaultFiles(vaultId: string): Promise<string[]> {
-  return await ipc.client.vaults.getFiles(vaultId)
+export async function getVaultFiles(
+  vaultId: string,
+  query?: string,
+): Promise<string[]> {
+  return await ipc.client.vaults.getFiles({ vaultId, query })
 }
 
 export async function hasSession(vaultId: string): Promise<boolean> {

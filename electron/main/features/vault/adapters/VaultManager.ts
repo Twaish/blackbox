@@ -240,8 +240,36 @@ export class VaultManager implements IVaultManager {
     this.registry.update(vaultId, { name })
   }
 
-  getVaultFiles(vaultId: string): string[] {
-    return this.files.list(this.registry.get(vaultId))
+  async getVaultFiles(vaultId: string, query?: string): Promise<string[]> {
+    const vault = this.registry.get(vaultId)
+    const allIds = this.files.list(vault)
+    if (!query || query.trim() === '') return allIds
+
+    const session = this.sessions.get(vaultId)
+    const lowerQuery = query.toLowerCase()
+    const matchedIds: string[] = []
+
+    await Promise.all(
+      allIds.map(async (fileId) => {
+        try {
+          const meta = await this.files.readMeta(vault, session.dek, fileId)
+
+          if (meta.original.name.toLowerCase().includes(lowerQuery)) {
+            matchedIds.push(fileId)
+          }
+        } catch (err) {
+          console.warn(`Failed to read meta for search on file ${fileId}`, err)
+        }
+      }),
+    )
+
+    return matchedIds
+
+    // await Promise.all(
+    //   allIds.map()
+    // )
+
+    // return this.files.list(this.registry.get(vaultId))
   }
 
   async startUpload({

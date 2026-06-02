@@ -6,6 +6,7 @@ import {
   changePassphraseInputSchema,
   createInputSchema,
   fileIdSchema,
+  getFilesInputSchema,
   getFilesOutputSchema,
   getOutputSchema,
   pathSchema,
@@ -140,7 +141,7 @@ export function createVaultRouters(modules: Modules) {
         ),
       ),
     getFiles: os
-      .input(vaultIdSchema)
+      .input(getFilesInputSchema)
       .output(getFilesOutputSchema)
       .handler(
         withErrorHandling(({ input }) => usecases.getVaultFiles.execute(input)),

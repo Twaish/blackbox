@@ -31,7 +31,7 @@ interface IVaultManager {
   }): Promise<void>
   restoreAllFiles(args: { vaultId: string; outputDir: string }): Promise<void>
 
-  getVaultFiles(vaultId: string): string[]
+  getVaultFiles(vaultId: string, query?: string): Promise<string[]>
 
   startUpload(args: {
     streamId: string

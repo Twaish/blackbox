@@ -5,7 +5,8 @@ type VaultFilesStore = {
   newFileIds: Set<string>
   selectedFileId?: string
   selectedVaultId?: string
-
+  searchQuery: string
+  setSearchQuery: (query: string) => void
   setFiles: (files: string[]) => void
   setSelectedFileId: (fileId?: string, vaultId?: string) => void
 
@@ -21,7 +22,8 @@ export const useVaultFilesStore = create<VaultFilesStore>((set, get) => ({
   newFileIds: new Set<string>(),
   selectedFileId: undefined,
   selectedVaultId: undefined,
-
+  searchQuery: '',
+  setSearchQuery: (query) => set({ searchQuery: query }),
   setFiles: (files) => set({ files }),
   setSelectedFileId: (fileId, vaultId) =>
     set({

@@ -14,7 +14,10 @@ export function FileListView() {
   const parentRef = useRef<HTMLDivElement>(null)
 
   const vaultId = useVaultFiles()
-  const { data: fileIds = [] } = useQuery(getVaultFilesQueryOptions(vaultId))
+  const query = useVaultFilesStore((s) => s.searchQuery)
+  const { data: fileIds = [] } = useQuery(
+    getVaultFilesQueryOptions(vaultId, query),
+  )
   const setFiles = useVaultFilesStore((s) => s.setFiles)
 
   useEffect(() => {

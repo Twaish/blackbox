@@ -58,6 +58,10 @@ export const restoreAllFilesInputSchema = z.object({
   outputDir: pathSchema,
 })
 
+export const getFilesInputSchema = z.object({
+  vaultId: vaultIdSchema,
+  query: z.string().optional(),
+})
 export const getFilesOutputSchema = z.array(fileIdSchema)
 
 export const unlockInputSchema = z.object({

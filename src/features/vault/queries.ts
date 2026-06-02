@@ -34,10 +34,10 @@ export const readVaultFileMetaQueryOptions = (
     queryFn: () => readVaultFileMeta(vaultId, fileId),
   })
 
-export const getVaultFilesQueryOptions = (vaultId: string) =>
+export const getVaultFilesQueryOptions = (vaultId: string, query?: string) =>
   queryOptions({
-    queryKey: queryKeys.getFiles(vaultId),
-    queryFn: () => getVaultFiles(vaultId),
+    queryKey: [...queryKeys.getFiles(vaultId), query],
+    queryFn: () => getVaultFiles(vaultId, query),
   })
 
 export const getVaultsQueryOptions = () =>
