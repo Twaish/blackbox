@@ -158,7 +158,7 @@ AddVaultDialog.PassInput = function PassInput() {
       </div>
       <input
         type={show ? 'text' : 'password'}
-        value={passphrase}
+        value={passphrase ?? ''}
         onChange={(e) => handleChange(e.target.value)}
         placeholder="e.g. securepass123"
         className="h-full w-full font-mono text-xs outline-none"
