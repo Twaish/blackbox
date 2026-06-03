@@ -8,6 +8,7 @@ import { FileGridView } from './blocks/FileGridView'
 import { VaultFilesContext } from '../contexts/useVaultFiles'
 import { useSettingsStore } from '../stores/useSettingsStore'
 import { ChangeLocationView } from './blocks/ChangeLocationView'
+import { SelectionBar } from './SelectionBar'
 
 export function VaultFiles() {
   const vaultId = useVaultStore((s) => s.selectedVaultId)
@@ -31,6 +32,7 @@ export function VaultFiles() {
         <>
           {hasSession ? <FileView /> : <UnlockView />}
           <FileOverlay />
+          <SelectionBar />
         </>
       ) : (
         <ChangeLocationView />

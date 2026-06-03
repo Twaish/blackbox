@@ -3,12 +3,21 @@ import { create } from 'zustand'
 type VaultFilesStore = {
   files: string[]
   newFileIds: Set<string>
+
+  markedFileIds: Set<string>
+  baseMarkedFileIds: Set<string>
+  lastMarkedFileId?: string
+
   selectedFileId?: string
   selectedVaultId?: string
   searchQuery: string
+
   setSearchQuery: (query: string) => void
   setFiles: (files: string[]) => void
   setSelectedFileId: (fileId?: string, vaultId?: string) => void
+
+  handleMark: (fileId: string, isCtrl: boolean, isShift: boolean) => void
+  clearMarked: () => void
 
   selectNext: () => void
   selectPrev: () => void
@@ -20,9 +29,15 @@ type VaultFilesStore = {
 export const useVaultFilesStore = create<VaultFilesStore>((set, get) => ({
   files: [],
   newFileIds: new Set<string>(),
+
+  markedFileIds: new Set<string>(),
+  baseMarkedFileIds: new Set<string>(),
+  lastMarkedFileId: undefined,
+
   selectedFileId: undefined,
   selectedVaultId: undefined,
   searchQuery: '',
+
   setSearchQuery: (query) => set({ searchQuery: query }),
   setFiles: (files) => set({ files }),
   setSelectedFileId: (fileId, vaultId) =>
@@ -30,6 +45,56 @@ export const useVaultFilesStore = create<VaultFilesStore>((set, get) => ({
       selectedFileId: fileId,
       selectedVaultId: vaultId,
     }),
+
+  handleMark: (fileId, isCtrl, isShift) => {
+    const { files, markedFileIds, baseMarkedFileIds, lastMarkedFileId } = get()
+
+    if (isShift) {
+      if (!lastMarkedFileId) {
+        const initialSelection = new Set([fileId])
+        return set({
+          markedFileIds: initialSelection,
+          baseMarkedFileIds: initialSelection,
+          lastMarkedFileId: fileId,
+        })
+      }
+
+      const currentIndex = files.indexOf(fileId)
+      const anchorIndex = files.indexOf(lastMarkedFileId)
+      if (currentIndex === -1 || anchorIndex === -1) return
+
+      const start = Math.min(currentIndex, anchorIndex)
+      const end = Math.max(currentIndex, anchorIndex)
+
+      let newSelection = new Set(baseMarkedFileIds)
+      for (let i = start; i <= end; i++) {
+        newSelection.add(files[i])
+      }
+
+      return set({
+        markedFileIds: newSelection,
+      })
+    } else if (isCtrl) {
+      let newSelection = new Set(markedFileIds)
+      if (newSelection.has(fileId)) {
+        newSelection.delete(fileId)
+      } else {
+        newSelection.add(fileId)
+      }
+      set({
+        markedFileIds: newSelection,
+        baseMarkedFileIds: newSelection,
+        lastMarkedFileId: fileId,
+      })
+    }
+  },
+  clearMarked: () => {
+    set({
+      markedFileIds: new Set<string>(),
+      baseMarkedFileIds: new Set<string>(),
+      lastMarkedFileId: undefined,
+    })
+  },
 
   selectNext: () => {
     const { files, selectedFileId } = get()
