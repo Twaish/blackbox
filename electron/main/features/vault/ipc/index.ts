@@ -5,6 +5,7 @@ import {
   changeLocationInputSchema,
   changePassphraseInputSchema,
   createInputSchema,
+  deleteFilesInputSchema,
   fileIdSchema,
   getFilesInputSchema,
   getFilesOutputSchema,
@@ -111,11 +112,11 @@ export function createVaultRouters(modules: Modules) {
       .handler(
         withErrorHandling(({ input }) => usecases.addVaultFile.execute(input)),
       ),
-    deleteFile: os
-      .input(vaultFileSchema)
+    deleteFiles: os
+      .input(deleteFilesInputSchema)
       .handler(
         withErrorHandling(({ input }) =>
-          usecases.deleteVaultFile.execute(input),
+          usecases.deleteVaultFiles.execute(input),
         ),
       ),
     readMeta: os

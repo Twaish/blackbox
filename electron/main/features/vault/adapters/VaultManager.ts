@@ -159,15 +159,15 @@ export class VaultManager implements IVaultManager {
     }
   }
 
-  async deleteFile({
+  async deleteFiles({
     vaultId,
-    fileId,
+    fileIds,
   }: {
     vaultId: string
-    fileId: string
+    fileIds: string[]
   }): Promise<void> {
     const vault = this.registry.get(vaultId)
-    await this.files.delete(vault, fileId)
+    await Promise.all(fileIds.map((fileId) => this.files.delete(vault, fileId)))
   }
 
   async createVault({

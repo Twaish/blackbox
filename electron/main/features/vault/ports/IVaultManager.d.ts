@@ -14,7 +14,7 @@ interface IVaultManager {
 
   addFile(args: { vaultId: string; filepath: string }): Promise<string>
 
-  deleteFile(args: { vaultId: string; fileId: string }): Promise<void>
+  deleteFiles(args: { vaultId: string; fileIds: string[] }): Promise<void>
 
   streamFile(args: {
     vaultId: string

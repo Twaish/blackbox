@@ -6,7 +6,6 @@ import HasVaultSession from './hasVaultSession'
 import RemoveVaultSession from './removeVaultSession'
 import CreateVault from './createVault'
 import AddVaultFile from './addVaultFile'
-import DeleteVaultFile from './deleteVaultFile'
 import ReadVaultFileMeta from './readVaultFileMeta'
 import RestoreVaultFile from './restoreVaultFile'
 import GetVaultFiles from './getVaultFiles'
@@ -16,6 +15,7 @@ import RestoreAllVaultFiles from './restoreAllVaultFiles'
 import VaultExists from './vaultExists'
 import ChangeVaultLocation from './changeVaultLocation'
 import ChangePassphrase from './changePassphrase'
+import DeleteVaultFiles from './deleteVaultFiles'
 
 export function createVaultUseCases({
   VaultRegistry,
@@ -35,7 +35,7 @@ export function createVaultUseCases({
     createVault: new CreateVault(VaultManager),
     renameVault: new RenameVault(VaultManager),
     addVaultFile: new AddVaultFile(VaultManager),
-    deleteVaultFile: new DeleteVaultFile(VaultManager),
+    deleteVaultFiles: new DeleteVaultFiles(VaultManager),
     readVaultFileMeta: new ReadVaultFileMeta(VaultManager),
     restoreVaultFile: new RestoreVaultFile(VaultManager),
     restoreAllVaultFiles: new RestoreAllVaultFiles(VaultManager),
