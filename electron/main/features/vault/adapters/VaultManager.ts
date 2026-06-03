@@ -64,6 +64,61 @@ export class VaultManager implements IVaultManager {
     }
   }
 
+  private async restoreFileToDir(
+    vault: VaultEntry,
+    dek: Buffer,
+    fileId: string,
+    outputDir: string,
+  ): Promise<void> {
+    const meta = await this.files.readMeta(vault, dek, fileId)
+    const outputPath = await this.getUniqueRestorePath(
+      outputDir,
+      meta.original.name,
+    )
+    await mkdir(path.dirname(outputPath), { recursive: true })
+    const fileBuffer = await this.files.read(vault, dek, fileId)
+    await writeFile(outputPath, fileBuffer)
+  }
+  private async restoreFilesBatch(
+    vault: VaultEntry,
+    dek: Buffer,
+    fileIds: string[],
+    outputDir: string,
+    taskId: string,
+  ): Promise<void> {
+    const total = fileIds.length
+    for (let i = 0; i < total; i++) {
+      const meta = await this.files.readMeta(vault, dek, fileIds[i])
+      this.tasks.updateTaskProgress({
+        id: taskId,
+        progress: Math.round((i / total) * 100),
+        description: `Exporting ${meta.original.name} (${i + 1}/${total})`,
+      })
+      await this.restoreFileToDir(vault, dek, fileIds[i], outputDir)
+    }
+  }
+  private async runRestoreTask(
+    label: string,
+    fn: (taskId: string) => Promise<void>,
+  ): Promise<void> {
+    const task = this.tasks.startTask({
+      label,
+      description: 'Exporting files from vault',
+    })
+    try {
+      await fn(task.id)
+      this.tasks.updateTaskProgress({
+        id: task.id,
+        progress: 100,
+        description: 'Export completed',
+      })
+      this.tasks.finishTask(task.id)
+    } catch (error) {
+      this.tasks.abortTask(task.id)
+      throw error
+    }
+  }
+
   async restoreFile({
     vaultId,
     fileId,
@@ -78,6 +133,21 @@ export class VaultManager implements IVaultManager {
     const fileBuffer = await this.files.read(vault, session.dek, fileId)
     await writeFile(outputFilepath, fileBuffer)
   }
+  async restoreFiles({
+    vaultId,
+    fileIds,
+    outputDir,
+  }: {
+    vaultId: string
+    fileIds: string[]
+    outputDir: string
+  }): Promise<void> {
+    const vault = this.registry.get(vaultId)
+    const { dek } = this.sessions.get(vaultId)
+    await this.runRestoreTask(`Exporting ${fileIds.length} files`, (taskId) =>
+      this.restoreFilesBatch(vault, dek, fileIds, outputDir, taskId),
+    )
+  }
   async restoreAllFiles({
     vaultId,
     outputDir,
@@ -86,52 +156,11 @@ export class VaultManager implements IVaultManager {
     outputDir: string
   }): Promise<void> {
     const vault = this.registry.get(vaultId)
-    const session = this.sessions.get(vaultId)
-
+    const { dek } = this.sessions.get(vaultId)
     const fileIds = this.files.list(vault)
-
-    const task = this.tasks.startTask({
-      label: `Exporting ${vault.name}`,
-      description: 'Exporting files from vault ',
-    })
-
-    try {
-      const total = fileIds.length
-      for (let i = 0; i < total; i++) {
-        const fileId = fileIds[i]
-        const meta = await this.files.readMeta(vault, session.dek, fileId)
-
-        this.tasks.updateTaskProgress({
-          id: task.id,
-          progress: Math.round((i / total) * 100),
-          description: `Exporting ${meta.original.name} (${i + 1}/${total})`,
-        })
-
-        const outputPath = await this.getUniqueRestorePath(
-          outputDir,
-          meta.original.name,
-        )
-
-        await mkdir(path.dirname(outputPath), {
-          recursive: true,
-        })
-
-        const fileBuffer = await this.files.read(vault, session.dek, fileId)
-
-        await writeFile(outputPath, fileBuffer)
-      }
-
-      this.tasks.updateTaskProgress({
-        id: task.id,
-        progress: 100,
-        description: `Export completed`,
-      })
-
-      this.tasks.finishTask(task.id)
-    } catch (error) {
-      this.tasks.abortTask(task.id)
-      throw error
-    }
+    await this.runRestoreTask(`Exporting ${vault.name}`, (taskId) =>
+      this.restoreFilesBatch(vault, dek, fileIds, outputDir, taskId),
+    )
   }
   private async getUniqueRestorePath(
     outputDir: string,

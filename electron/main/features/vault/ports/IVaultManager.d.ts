@@ -29,6 +29,11 @@ interface IVaultManager {
     fileId: string
     outputFilepath: string
   }): Promise<void>
+  restoreFiles(args: {
+    vaultId: string
+    fileIds: string[]
+    outputDir: string
+  }): Promise<void>
   restoreAllFiles(args: { vaultId: string; outputDir: string }): Promise<void>
 
   getVaultFiles(vaultId: string, query?: string): Promise<string[]>

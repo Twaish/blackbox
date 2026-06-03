@@ -16,6 +16,7 @@ import VaultExists from './vaultExists'
 import ChangeVaultLocation from './changeVaultLocation'
 import ChangePassphrase from './changePassphrase'
 import DeleteVaultFiles from './deleteVaultFiles'
+import RestoreVaultFiles from './restoreVaultFiles'
 
 export function createVaultUseCases({
   VaultRegistry,
@@ -38,6 +39,7 @@ export function createVaultUseCases({
     deleteVaultFiles: new DeleteVaultFiles(VaultManager),
     readVaultFileMeta: new ReadVaultFileMeta(VaultManager),
     restoreVaultFile: new RestoreVaultFile(VaultManager),
+    restoreVaultFiles: new RestoreVaultFiles(VaultManager),
     restoreAllVaultFiles: new RestoreAllVaultFiles(VaultManager),
     getVaultFiles: new GetVaultFiles(VaultManager),
     unlockVault: new UnlockVault(VaultManager),
