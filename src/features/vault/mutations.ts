@@ -5,7 +5,7 @@ import {
   changePassphrase,
   changeVaultLocation,
   createVault,
-  deleteVaultFile,
+  deleteVaultFiles,
   removeSession,
   renameVault,
   unlinkVault,
@@ -52,9 +52,9 @@ export const useUploadVaultFile = (vaultId: string) =>
       }),
   })
 
-export const useRemoveVaultFile = (vaultId: string) =>
+export const useRemoveVaultFiles = (vaultId: string) =>
   useMutation({
-    mutationFn: (fileId: string) => deleteVaultFile(vaultId, fileId),
+    mutationFn: (fileIds: string[]) => deleteVaultFiles(vaultId, fileIds),
     onSettled: () =>
       queryClient.invalidateQueries({
         queryKey: queryKeys.getFiles(vaultId),

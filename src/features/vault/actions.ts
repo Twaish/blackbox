@@ -10,8 +10,8 @@ export async function addVaultFile(
   })
 }
 
-export async function deleteVaultFile(vaultId: string, fileId: string) {
-  return await ipc.client.vaults.deleteFile({ vaultId, fileId })
+export async function deleteVaultFiles(vaultId: string, fileIds: string[]) {
+  return await ipc.client.vaults.deleteFiles({ vaultId, fileIds })
 }
 
 export function abortStream(streamId: string): void {

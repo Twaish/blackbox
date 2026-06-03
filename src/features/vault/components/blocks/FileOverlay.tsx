@@ -6,7 +6,7 @@ import {
   readVaultFileMetaQueryOptions,
 } from '../../queries'
 import { restoreVaultFile } from '../../actions'
-import { useRemoveVaultFile } from '../../mutations'
+import { useRemoveVaultFiles } from '../../mutations'
 import { cn } from '@/utils/tailwind'
 import { Button } from '@/components/ui/button'
 import { useConfirmationDialog } from '@/components/confirmation-dialog/useConfirmationDialog'
@@ -57,11 +57,11 @@ FileOverlay.Actions = function Actions({ meta }: { meta: VaultFileMeta }) {
   const setSelectedFileId = useVaultFilesStore((s) => s.setSelectedFileId)
 
   const close = () => setSelectedFileId(undefined)
-  const { mutate: removeFile } = useRemoveVaultFile(vaultId)
+  const { mutate: removeFiles } = useRemoveVaultFiles(vaultId)
   const { confirm: confirmRemove } = useConfirmationDialog({
     onConfirm: () => {
       if (!selectedFileId) return
-      removeFile(selectedFileId)
+      removeFiles([selectedFileId])
       close()
     },
   })
