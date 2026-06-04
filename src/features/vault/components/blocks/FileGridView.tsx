@@ -22,12 +22,17 @@ export function FileGridView() {
     getVaultFilesQueryOptions(vaultId, query),
   )
   const setFiles = useVaultFilesStore((s) => s.setFiles)
+  const clearMarked = useVaultFilesStore((s) => s.clearMarked)
 
   useEffect(() => {
     setFiles(fileIds)
   }, [fileIds])
 
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+
+  useEffect(() => {
+    clearMarked()
+  }, [vaultId])
 
   useEffect(() => {
     setVisibleCount(PAGE_SIZE)
