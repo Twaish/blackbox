@@ -30,7 +30,13 @@ export function SelectionBar({ className, ...props }: ComponentProps<'div'>) {
   if (!markedFileIds.size) return null
 
   return (
-    <div className={cn('flex h-8 border-t', className)} {...props}>
+    <div
+      className={cn(
+        'bg-background/90 absolute bottom-0 flex h-8 w-full border-t backdrop-blur-md',
+        className,
+      )}
+      {...props}
+    >
       <div className="text-muted-foreground flex h-full items-center border-r p-2 font-mono text-xs">
         {markedFileIds.size} selected
       </div>
@@ -38,7 +44,7 @@ export function SelectionBar({ className, ...props }: ComponentProps<'div'>) {
         <button
           title="Export selected files"
           onClick={handleExport}
-          className="hover:bg-secondary/50 flex h-full items-center justify-center gap-1 border-r px-2 text-xs"
+          className="hover:bg-secondary/75 flex h-full items-center justify-center gap-1 border-r px-2 text-xs"
         >
           <ArrowRightFromLine className="h-4 w-4" />
           Export
@@ -46,7 +52,7 @@ export function SelectionBar({ className, ...props }: ComponentProps<'div'>) {
         <button
           title="Remove selected files"
           onClick={confirmRemove}
-          className="hover:bg-secondary/50 flex h-full items-center justify-center gap-1 border-r px-2 text-xs"
+          className="hover:bg-secondary/75 flex h-full items-center justify-center gap-1 border-r px-2 text-xs"
         >
           <Trash className="h-4 w-4" />
           Delete
@@ -55,7 +61,7 @@ export function SelectionBar({ className, ...props }: ComponentProps<'div'>) {
       <button
         title="Clear selection"
         onClick={clearMarked}
-        className="hover:bg-secondary/50 ml-auto flex h-full items-center justify-center gap-1 px-2 text-xs"
+        className="hover:bg-secondary/75 ml-auto flex h-full items-center justify-center gap-1 px-2 text-xs"
       >
         <X className="h-4 w-4" />
         Clear
