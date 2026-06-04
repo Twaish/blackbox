@@ -2,7 +2,6 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
 import { QueryClientProvider } from '@tanstack/react-query'
-import { TooltipProvider } from './components/ui/tooltip'
 import { ModalProvider } from './components/modal/ModalProvider'
 import { queryClient } from './core/queryClient'
 import VaultPage from './pages/VaultPage'
@@ -22,9 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <StrictMode>
       <QueryClientProvider client={queryClient}>
         <ModalProvider />
-        <TooltipProvider>
-          <App />
-        </TooltipProvider>
+        <App />
       </QueryClientProvider>
     </StrictMode>,
   )
