@@ -33,7 +33,7 @@ export default function DragWindowRegion({
 
 function WindowButtons() {
   return (
-    <div className="m-1 flex">
+    <div className="flex">
       <WindowButton title="Minimize window" onClick={minimizeWindow}>
         <svg
           aria-hidden="true"
@@ -90,7 +90,7 @@ function WindowButton({
   return (
     <Button
       variant={'ghost'}
-      className={cn('h-min rounded-sm px-2.25 py-1.5', className)}
+      className={cn('h-full rounded-none px-2.5 py-1.5', className)}
       {...rest}
     >
       {children}
