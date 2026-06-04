@@ -31,7 +31,7 @@ export function SelectionBar({ className, ...props }: ComponentProps<'div'>) {
 
   return (
     <div className={cn('flex h-8 border-t', className)} {...props}>
-      <div className="flex h-full items-center border-r p-2 text-sm">
+      <div className="text-muted-foreground flex h-full items-center border-r p-2 font-mono text-xs">
         {markedFileIds.size} selected
       </div>
       <div className="flex">
@@ -53,6 +53,7 @@ export function SelectionBar({ className, ...props }: ComponentProps<'div'>) {
         </button>
       </div>
       <button
+        title="Clear selection"
         onClick={clearMarked}
         className="hover:bg-secondary/50 ml-auto flex h-full items-center justify-center gap-1 px-2 text-xs"
       >
