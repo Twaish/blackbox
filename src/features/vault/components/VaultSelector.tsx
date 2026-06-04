@@ -13,7 +13,6 @@ import {
   LockOpen,
   LogOut,
   MoreHorizontal,
-  Search,
   Unlink,
 } from 'lucide-react'
 import {
@@ -416,8 +415,7 @@ function OptionButton({
   return (
     <button
       className={cn(
-        // 'hover:bg-secondary/50 flex h-6 gap-1 rounded-md px-1 py-1',
-        'hover:bg-secondary/50 flex h-10 gap-2 rounded-md px-2 py-1',
+        'hover:bg-secondary/50 flex h-10 gap-2 px-2 py-1',
         className,
       )}
       {...props}
