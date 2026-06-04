@@ -6,7 +6,7 @@ import { VaultSelector } from '@/features/vault/components/VaultSelector'
 import { UploadFileButton } from '@/features/vault/components/action-buttons/UploadFileButton'
 import { SettingsButton } from '@/features/vault/components/action-buttons/SettingsButton'
 import { TasksButton } from '@/app/tasks/components/TasksButton'
-import { SearchField } from '@/features/vault/components/blocks/SearchField'
+import { FileSearchField } from '@/features/vault/components/blocks/FileSearchField'
 
 export default function BaseLayout({ children }: { children: ReactNode }) {
   const { data: appName } = useQuery({
@@ -18,7 +18,7 @@ export default function BaseLayout({ children }: { children: ReactNode }) {
   return (
     <div className="relative flex flex-[1_1_auto] flex-col overflow-hidden">
       <DragWindowRegion title={appName}>
-        <SearchField />
+        <FileSearchField />
         <UploadFileButton />
         <VaultSelector />
         <TasksButton />
