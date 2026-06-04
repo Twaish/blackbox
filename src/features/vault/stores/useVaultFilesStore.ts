@@ -26,13 +26,17 @@ type VaultFilesStore = {
   clearNewFile: (fileId: string) => void
 }
 
+const DEFAULT_MARKED_STATE = () => ({
+  markedFileIds: new Set<string>(),
+  baseMarkedFileIds: new Set<string>(),
+  lastMarkedFileId: undefined,
+})
+
 export const useVaultFilesStore = create<VaultFilesStore>((set, get) => ({
   files: [],
   newFileIds: new Set<string>(),
 
-  markedFileIds: new Set<string>(),
-  baseMarkedFileIds: new Set<string>(),
-  lastMarkedFileId: undefined,
+  ...DEFAULT_MARKED_STATE(),
 
   selectedFileId: undefined,
   selectedVaultId: undefined,
@@ -89,11 +93,7 @@ export const useVaultFilesStore = create<VaultFilesStore>((set, get) => ({
     }
   },
   clearMarked: () => {
-    set({
-      markedFileIds: new Set<string>(),
-      baseMarkedFileIds: new Set<string>(),
-      lastMarkedFileId: undefined,
-    })
+    set(DEFAULT_MARKED_STATE())
   },
 
   selectNext: () => {
