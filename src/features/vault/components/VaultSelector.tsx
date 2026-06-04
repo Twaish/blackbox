@@ -42,6 +42,7 @@ import { useConfirmationDialog } from '@/components/confirmation-dialog/useConfi
 import { useRenameVaultDialog } from '../hooks/useRenameVaultDialog'
 import { restoreAllVaultFiles } from '../actions'
 import { useChangePassphraseDialog } from '../hooks/useChangePassphraseDialog'
+import { SearchField } from './ui/SearchField'
 
 type VaultSelectorStore = {
   vault?: VaultEntry
@@ -147,21 +148,20 @@ VaultSelector.SelectedVault = function SelectedVault({
   )
 }
 
-VaultSelector.SearchField = function SearchField() {
+VaultSelector.SearchField = function VaultSearchField() {
   const query = useVaultSelectorStore((s) => s.query)
   const setQuery = useVaultSelectorStore((s) => s.setQuery)
   return (
-    <div className="flex h-8 w-full items-center gap-1 border-b px-2 py-1">
-      <Search className="text-muted-foreground h-3.5 w-3.5" />
-      <input
+    <SearchField className="w-full border-b">
+      <SearchField.Icon />
+      <SearchField.Input
         autoFocus
         spellCheck={false}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        className="text-sm outline-none"
         placeholder="Search vaults..."
       />
-    </div>
+    </SearchField>
   )
 }
 
