@@ -13,10 +13,16 @@ import {
   Shuffle,
   SkipForward,
   SkipBack,
+  Check,
 } from 'lucide-react'
 import { FilePreview } from '../FilePreview'
 import styles from './AudioContent.module.css'
 import { create } from 'zustand'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 
 type AudioPlayerStore = {
   audio: HTMLAudioElement | null
@@ -370,21 +376,52 @@ AudioContent.AudioSource = function AudioSource(
 }
 
 AudioContent.PlaybackSpeedButton = function PlaybackSpeedButton() {
-  const [playbackSpeed, setPlaybackSpeed] = useState(1)
+  const audioSource = useAudioPlayerStore((s) => s.audio)
+  const [playback, setPlayback] = useState(1)
+  const [open, setOpen] = useState(false)
 
-  // TODO: Implement playback menu
-  const handlePlayback = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // const playback
+  const handlePlayback = (playbackSpeed: number) => {
+    if (audioSource) {
+      audioSource.playbackRate = playbackSpeed
+      setPlayback(playbackSpeed)
+      setOpen(false)
+    }
   }
 
+  const playbackSpeeds = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
+
   return (
-    <button className="flex items-center justify-center">
-      <Metronome
-        className={cn(
-          'text-secondary-foreground/50 hover:text-secondary-foreground h-3.5 w-3.5 transition-colors duration-200',
-        )}
-      />
-    </button>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          title="Change playback speed"
+          className="flex items-center justify-center"
+        >
+          <Metronome
+            className={cn(
+              'text-secondary-foreground/50 hover:text-secondary-foreground h-3.5 w-3.5 transition-colors duration-200',
+            )}
+          />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="max-w-40 gap-0 p-0 font-mono text-xs select-none">
+        {playbackSpeeds.map((playbackSpeed) => {
+          const isSelected = playback === playbackSpeed
+          return (
+            <div
+              onClick={() => handlePlayback(playbackSpeed)}
+              className={cn(
+                'hover:bg-secondary/20 flex items-center px-3 py-1.5',
+                isSelected && 'bg-secondary/35 border-primary border-l',
+              )}
+            >
+              <span>{playbackSpeed}</span>
+              {isSelected && <Check className="ml-auto h-3.5 w-3.5" />}
+            </div>
+          )
+        })}
+      </PopoverContent>
+    </Popover>
   )
 }
 
