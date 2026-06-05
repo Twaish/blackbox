@@ -9,6 +9,7 @@ import { VaultFilesContext } from '../contexts/useVaultFiles'
 import { useSettingsStore } from '../stores/useSettingsStore'
 import { ChangeLocationView } from './blocks/ChangeLocationView'
 import { SelectionBar } from './SelectionBar'
+import { EmptyVaultsView } from './blocks/EmptyVaultsView'
 
 export function VaultFiles() {
   const vaultId = useVaultStore((s) => s.selectedVaultId)
@@ -22,7 +23,7 @@ export function VaultFiles() {
   })
   const viewStyle = useSettingsStore((s) => s.viewStyle)
 
-  if (!vaultId) return null
+  if (!vaultId) return <EmptyVaultsView />
 
   const FileView = viewStyle === 'grid' ? FileGridView : FileListView
 
