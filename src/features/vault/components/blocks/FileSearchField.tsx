@@ -26,7 +26,7 @@ export function FileSearchField() {
   }, [])
 
   return (
-    <SearchField className="border-l">
+    <SearchField className="h-full border-l">
       <SearchField.Icon />
       <SearchField.Input
         ref={inputRef}
