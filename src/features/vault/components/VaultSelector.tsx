@@ -189,7 +189,12 @@ VaultSelector.Items = function Items() {
 
   return (
     <div className="relative h-full w-full overflow-hidden">
-      <div className="hide-scroll h-full max-h-50 w-full overflow-auto pb-10">
+      <div
+        className={cn(
+          'hide-scroll h-full max-h-50 w-full overflow-auto',
+          filteredVaults.length && 'pb-10',
+        )}
+      >
         {isLoading ? (
           <div>Loading...</div>
         ) : (
