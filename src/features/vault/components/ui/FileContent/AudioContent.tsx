@@ -10,7 +10,6 @@ import {
   VolumeOff,
   VolumeX,
   Metronome,
-  Shuffle,
   SkipForward,
   SkipBack,
   Check,
@@ -23,6 +22,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import { useVaultFilesStore } from '@/features/vault/stores/useVaultFilesStore'
+import { readVaultFileMeta } from '@/features/vault/actions'
 
 type AudioPlayerStore = {
   audio: HTMLAudioElement | null
@@ -68,8 +69,6 @@ const useAudioPlayerStore = create<AudioPlayerStore>((set, get) => ({
 
   isRepeating: false,
   playbackSpeed: 1,
-
-  reset: () => {},
 
   setAudio: (audio) => {
     if (!audio) {
@@ -204,17 +203,13 @@ export function AudioContent({
           </span>
         )}
       </div>
-      <AudioContent.AudioControls />
+      <AudioContent.AudioControls vaultId={vaultId} fileId={meta.fileId} />
       <div className="flex flex-col gap-1">
         <AudioContent.TimeSlider />
 
-        <div className="flex justify-between">
+        <div className="flex items-center justify-between">
           <AudioContent.CurrentTime />
-
-          <div className="flex items-center gap-1">
-            <AudioContent.VolumeControls />
-            <AudioContent.PlaybackSpeedButton />
-          </div>
+          <AudioContent.VolumeControls />
           <AudioContent.Duration />
         </div>
       </div>
@@ -253,31 +248,43 @@ AudioContent.TimeSlider = function TimeSlider({
   )
 }
 
-AudioContent.AudioControls = function AudioControls() {
+AudioContent.AudioControls = function AudioControls({
+  vaultId,
+  fileId,
+}: {
+  vaultId: string
+  fileId: string
+}) {
   const isPlaying = useAudioPlayerStore((s) => s.isPlaying)
   const isRepeating = useAudioPlayerStore((s) => s.isRepeating)
+  const currentTime = useAudioPlayerStore((s) => s.currentTime)
 
   const togglePlay = useAudioPlayerStore((s) => s.togglePlay)
   const toggleRepeat = useAudioPlayerStore((s) => s.toggleRepeat)
+  const seek = useAudioPlayerStore((s) => s.seek)
+
+  const setSelectedFileId = useVaultFilesStore((s) => s.setSelectedFileId)
+
+  const skipTo = async (find: () => Promise<string | null>) => {
+    const nextId = await find()
+    if (nextId) setSelectedFileId(nextId, vaultId)
+  }
+
+  const handleSkipPrev = () => {
+    if (currentTime > 3) {
+      seek(0)
+      return
+    }
+    skipTo(() => findPrevAudioFileId(vaultId, fileId))
+  }
+
+  const handleSkipNext = () => {
+    skipTo(() => findNextAudioFileId(vaultId, fileId))
+  }
+
   return (
     <div className="flex w-full items-center justify-center gap-6">
-      <button>
-        <Shuffle className="text-secondary-foreground/50 h-3.5 w-3.5" />
-      </button>
-      <button>
-        <SkipBack className="h-4.5 w-4.5 fill-current" />
-      </button>
-      <button className="cursor-default" onClick={togglePlay}>
-        {isPlaying ? (
-          <Pause className="h-4.5 w-4.5 fill-current transition-all duration-200 hover:drop-shadow-[0_0_4px_rgba(255,255,255,0.5)]" />
-        ) : (
-          <Play className="h-4.5 w-4.5 fill-current transition-all duration-200 hover:drop-shadow-[0_0_4px_rgba(255,255,255,0.5)]" />
-        )}
-      </button>
-      <button>
-        <SkipForward className="h-4.5 w-4.5 fill-current" />
-      </button>
-      <button onClick={toggleRepeat}>
+      <button title="Toggle repeat" onClick={toggleRepeat}>
         <Repeat
           className={cn(
             'h-3.5 w-3.5 transition-colors duration-200',
@@ -287,6 +294,24 @@ AudioContent.AudioControls = function AudioControls() {
           )}
         />
       </button>
+      <button onClick={handleSkipPrev} title="Skip to previous audio">
+        <SkipBack className="h-4.5 w-4.5 fill-current" />
+      </button>
+      <button
+        title={isPlaying ? 'Pause Audio' : 'Play Audio'}
+        className="cursor-default"
+        onClick={togglePlay}
+      >
+        {isPlaying ? (
+          <Pause className="h-4.5 w-4.5 fill-current transition-all duration-200 hover:drop-shadow-[0_0_4px_rgba(255,255,255,0.5)]" />
+        ) : (
+          <Play className="h-4.5 w-4.5 fill-current transition-all duration-200 hover:drop-shadow-[0_0_4px_rgba(255,255,255,0.5)]" />
+        )}
+      </button>
+      <button onClick={handleSkipNext} title="Skip to next audio">
+        <SkipForward className="h-4.5 w-4.5 fill-current" />
+      </button>
+      <AudioContent.PlaybackSpeedButton />
     </div>
   )
 }
@@ -305,7 +330,11 @@ AudioContent.VolumeControls = function VolumeControls() {
   }, [volume, isMuted])
   return (
     <>
-      <button onClick={toggleMute} className="flex items-center justify-center">
+      <button
+        title="Toggle volume"
+        onClick={toggleMute}
+        className="flex items-center justify-center"
+      >
         <VolumeIcon className="text-secondary-foreground/70 h-4 w-4" />
       </button>
       <input
@@ -409,6 +438,7 @@ AudioContent.PlaybackSpeedButton = function PlaybackSpeedButton() {
           const isSelected = playback === playbackSpeed
           return (
             <div
+              key={playbackSpeed}
               onClick={() => handlePlayback(playbackSpeed)}
               className={cn(
                 'hover:bg-secondary/20 flex items-center px-3 py-1.5',
@@ -449,4 +479,44 @@ function formatTime(time: number) {
   const seconds = Math.floor(time % 60)
 
   return `${minutes}:${seconds.toString().padStart(2, '0')}`
+}
+
+async function findAdjacentAudioFileId(
+  vaultId: string,
+  currentFileId: string,
+  direction: 'next' | 'prev',
+): Promise<string | null> {
+  const files = useVaultFilesStore.getState().files
+  const currentIndex = files.indexOf(currentFileId)
+
+  if (currentIndex === -1) return null
+
+  const searchOrder =
+    direction === 'next'
+      ? [...files.slice(currentIndex + 1), ...files.slice(0, currentIndex)]
+      : [
+          ...files.slice(0, currentIndex).reverse(),
+          ...files.slice(currentIndex + 1).reverse(),
+        ]
+
+  for (const fileId of searchOrder) {
+    try {
+      const meta = await readVaultFileMeta(vaultId, fileId)
+      if (meta.original.mime.startsWith('audio/')) {
+        return fileId
+      }
+    } catch {
+      continue
+    }
+  }
+
+  return null
+}
+
+function findNextAudioFileId(vaultId: string, currentFileId: string) {
+  return findAdjacentAudioFileId(vaultId, currentFileId, 'next')
+}
+
+function findPrevAudioFileId(vaultId: string, currentFileId: string) {
+  return findAdjacentAudioFileId(vaultId, currentFileId, 'prev')
 }
