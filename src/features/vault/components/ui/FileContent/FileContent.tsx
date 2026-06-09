@@ -5,6 +5,7 @@ import { Loader2 } from 'lucide-react'
 import { extractID3Metadata } from '../../../utils/audio-utils'
 import { TextContent } from './TextContent'
 import { AudioContent } from './AudioContent'
+import { VideoContent } from './VideoContent'
 
 export function StreamedFileContent({
   meta,
@@ -92,7 +93,7 @@ export function StreamedFileContent({
     )
 
   if (mime.startsWith('video/'))
-    return <video className={className} src={url} controls />
+    return <VideoContent src={url} className={className} />
 
   if (mime.startsWith('audio/'))
     return (
