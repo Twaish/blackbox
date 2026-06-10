@@ -64,14 +64,19 @@ export const VaultFile = memo(function VaultFile({
       <div
         className={cn(
           'flex items-center justify-center overflow-hidden',
-          viewStyle === 'grid' ? 'flex-1' : 'aspect-square h-full border-r',
+          viewStyle === 'grid'
+            ? 'flex-1'
+            : 'aspect-square h-full min-w-max border-r',
         )}
       >
         <FilePreview className="select-none" meta={meta} vaultId={vaultId} />
       </div>
       <FileHeader
         meta={meta}
-        className={cn(viewStyle === 'grid' && 'border-t p-2', 'select-none')}
+        className={cn(
+          viewStyle === 'grid' && 'border-t p-2',
+          'overflow-hidden select-none',
+        )}
       />
     </button>
   )
