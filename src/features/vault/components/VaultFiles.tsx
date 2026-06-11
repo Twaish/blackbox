@@ -36,15 +36,20 @@ function VaultFilesContent({ vaultId }: { vaultId: string }) {
 }
 function VaultFilesBody({ vaultId }: { vaultId: string }) {
   const { hasSession } = useHasVaultSession(vaultId)
-  const viewStyle = useSettingsStore((s) => s.viewStyle)
-
-  const FileView = viewStyle === 'grid' ? FileGridView : FileListView
-
-  return (
+  return hasSession ? (
     <>
-      {hasSession ? <FileView /> : <UnlockView />}
+      <FileView />
       <FileOverlay />
       <SelectionBar />
     </>
+  ) : (
+    <UnlockView />
   )
+}
+
+function FileView() {
+  const viewStyle = useSettingsStore((s) => s.viewStyle)
+
+  if (viewStyle === 'grid') return <FileGridView />
+  return <FileListView />
 }

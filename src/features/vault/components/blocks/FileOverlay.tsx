@@ -24,7 +24,6 @@ export function FileOverlay() {
   const selectedFileId = useVaultFilesStore((s) => s.selectedFileId)
   const vaultHasChanged = selectedVaultId !== vaultId
 
-  const { data: hasSession2 } = useQuery(hasSessionQueryOptions(vaultId))
   const { hasSession } = useHasVaultSession(vaultId)
   const { data: meta } = useQuery({
     ...readVaultFileMetaQueryOptions(vaultId, selectedFileId!),

@@ -7,7 +7,7 @@ export function EmptyFileView() {
     <EmptyIndicator>
       <EmptyIndicator.Content className="max-w-md">
         <EmptyIndicator.Description className="text-center">
-          No files yet
+          No files found
         </EmptyIndicator.Description>
         <div className="text-muted-foreground flex flex-col items-center gap-2 text-xs">
           <div className="flex items-center gap-2">
