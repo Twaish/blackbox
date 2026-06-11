@@ -5,8 +5,14 @@
     "paths": {
       "@/*": ["./src/*"],
       "@shared/*": ["./shared/*"],
-      "@main/*": ["./electron/main/*"]
+      "@main/*": ["./electron/main/*"],
+      "@assets/*": ["./assets/*"]
     }
   },
-  "include": ["./src/**/*", "./shared/**/*", "./electron/main/**/*"]
+  "include": [
+    "./src/**/*",
+    "./shared/**/*",
+    "./electron/main/**/*",
+    "./assets/**/*"
+  ]
 }
