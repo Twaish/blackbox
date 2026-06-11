@@ -1,7 +1,12 @@
 import { is } from '@electron-toolkit/utils'
-import { BrowserWindow, shell } from 'electron'
+import { app, BrowserWindow, shell } from 'electron'
 import EventEmitter from 'events'
 import path from 'path'
+
+const iconPath = path.join(
+  app.isPackaged ? process.resourcesPath : __dirname,
+  '../../assets/icon.png',
+)
 
 export class ElectronWindow extends EventEmitter {
   private mainWindow: BrowserWindow
@@ -16,7 +21,7 @@ export class ElectronWindow extends EventEmitter {
       show: false,
       autoHideMenuBar: true,
       titleBarStyle: 'hidden',
-      // icon: icon,
+      icon: iconPath,
 
       // frame: false,
       // transparent: true,
