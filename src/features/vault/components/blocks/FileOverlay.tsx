@@ -1,10 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { ComponentProps, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, Download, Trash, X } from 'lucide-react'
-import {
-  hasSessionQueryOptions,
-  readVaultFileMetaQueryOptions,
-} from '../../queries'
+import { readVaultFileMetaQueryOptions } from '../../queries'
 import { restoreVaultFile } from '../../actions'
 import { useRemoveVaultFiles } from '../../mutations'
 import { cn } from '@/utils/tailwind'
@@ -12,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { useConfirmationDialog } from '@/components/confirmation-dialog/useConfirmationDialog'
 import { MimeIcon } from '../ui/MimeIcon'
 import { FileHeader } from '../ui/FileHeader'
-import { StreamedFileContent } from '../ui/FileContent/FileContent'
+import { StreamedFileContent } from '../ui/FileContent'
 import { saveFile } from '@/app/instance/actions'
 import { useVaultFiles } from '../../contexts/useVaultFiles'
 import { useVaultFilesStore } from '../../stores/useVaultFilesStore'
