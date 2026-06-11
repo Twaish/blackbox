@@ -8,22 +8,13 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/utils/tailwind'
 
 interface DragWindowRegionProps {
-  title?: ReactNode
   children?: ReactNode
 }
 
-export default function DragWindowRegion({
-  title,
-  children,
-}: DragWindowRegionProps) {
+export default function DragWindowRegion({ children }: DragWindowRegionProps) {
   return (
     <div className="z-50 flex h-8 min-h-8 w-full items-stretch justify-between border-b">
       <div className="draglayer hide-scroll flex flex-1 items-center overflow-x-auto">
-        {title && (
-          <div className="mr-auto flex pr-1 pl-2 text-xs whitespace-nowrap opacity-65 select-none">
-            {title}
-          </div>
-        )}
         {children}
       </div>
       <WindowButtons />

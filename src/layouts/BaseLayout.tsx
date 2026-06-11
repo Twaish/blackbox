@@ -7,6 +7,7 @@ import { UploadFileButton } from '@/features/vault/components/action-buttons/Upl
 import { SettingsButton } from '@/features/vault/components/action-buttons/SettingsButton'
 import { TasksButton } from '@/app/tasks/components/TasksButton'
 import { FileSearchField } from '@/features/vault/components/blocks/FileSearchField'
+import logo from '@assets/icon.png'
 
 export default function BaseLayout({ children }: { children: ReactNode }) {
   return (
@@ -20,19 +21,35 @@ export default function BaseLayout({ children }: { children: ReactNode }) {
 }
 
 function TitleBar() {
-  const { data: appName } = useSuspenseQuery({
-    queryKey: ['appName'],
-    queryFn: getAppName,
-    staleTime: Infinity,
-  })
-
   return (
-    <DragWindowRegion title={appName}>
+    <DragWindowRegion>
+      <AppLogo />
+      <AppName />
       <FileSearchField />
       <UploadFileButton />
       <VaultSelector />
       <TasksButton />
       <SettingsButton />
     </DragWindowRegion>
+  )
+}
+
+function AppLogo() {
+  return <img src={logo} className="max-h-6 pr-1 pl-1" />
+}
+
+function AppName() {
+  const { data: appName } = useSuspenseQuery({
+    queryKey: ['appName'],
+    queryFn: getAppName,
+    staleTime: Infinity,
+  })
+
+  if (!appName) return
+
+  return (
+    <div className="mr-auto flex pr-1 text-xs whitespace-nowrap opacity-65 select-none">
+      {appName}
+    </div>
   )
 }
