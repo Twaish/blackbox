@@ -1,16 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useVaultStore } from '../stores/useVaultStore'
 import { useUploadVaultFileStream } from '../mutations'
-import { useQuery } from '@tanstack/react-query'
-import { hasSessionQueryOptions } from '../queries'
+import { useHasVaultSession } from '../hooks/useHasVaultSession'
 
 export function UploadOverlay() {
   const [isDragging, setIsDragging] = useState(false)
   const vaultId = useVaultStore((s) => s.selectedVaultId)
-  const { data: hasSession } = useQuery(hasSessionQueryOptions(vaultId ?? ''))
+  const { hasSession: enabled } = useHasVaultSession(vaultId)
   const { mutate: upload } = useUploadVaultFileStream(vaultId ?? '')
-
-  const enabled = !!vaultId && !!hasSession
 
   useEffect(() => {
     if (!enabled) return

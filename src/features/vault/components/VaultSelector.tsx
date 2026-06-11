@@ -42,6 +42,7 @@ import { useRenameVaultDialog } from '../hooks/useRenameVaultDialog'
 import { restoreAllVaultFiles } from '../actions'
 import { useChangePassphraseDialog } from '../hooks/useChangePassphraseDialog'
 import { SearchField } from './ui/SearchField'
+import { useHasVaultSession } from '../hooks/useHasVaultSession'
 
 type VaultSelectorStore = {
   vault?: VaultEntry
@@ -270,7 +271,7 @@ VaultItem.Options = function Options({ vault }: { vault: VaultEntry }) {
   const { mutate: renameVault } = useRenameVault(vault.id)
   const { mutate: removeSession } = useRemoveSession(vault.id)
   const { mutateAsync: changePassphrase } = useChangePassphrase(vault.id)
-  const { data: hasSession } = useQuery(hasSessionQueryOptions(vault.id))
+  const { hasSession } = useHasVaultSession(vault.id)
   const { confirm: confirmUnlink } = useConfirmationDialog({
     onConfirm: () => {
       unlinkVault(vault.id ?? '')
@@ -478,7 +479,7 @@ OptionButton.Description = function Description({
 }
 
 function SessionIndicator({ vaultId }: { vaultId: string }) {
-  const { data: hasSession } = useQuery(hasSessionQueryOptions(vaultId))
+  const { hasSession } = useHasVaultSession(vaultId)
   return hasSession ? (
     <LockOpen className="h-3 w-3 text-green-400" />
   ) : (

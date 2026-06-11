@@ -1,5 +1,5 @@
-import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
-import { existsQueryOptions, hasSessionQueryOptions } from '../queries'
+import { useQuery } from '@tanstack/react-query'
+import { existsQueryOptions } from '../queries'
 import { useVaultStore } from '../stores/useVaultStore'
 import { FileOverlay } from './blocks/FileOverlay'
 import { UnlockView } from './blocks/UnlockView'
@@ -10,13 +10,11 @@ import { useSettingsStore } from '../stores/useSettingsStore'
 import { ChangeLocationView } from './blocks/ChangeLocationView'
 import { SelectionBar } from './SelectionBar'
 import { EmptyVaultsView } from './blocks/EmptyVaultsView'
+import { useHasVaultSession } from '../hooks/useHasVaultSession'
 
 export function VaultFiles() {
   const vaultId = useVaultStore((s) => s.selectedVaultId)
-  const { data: hasSession } = useQuery({
-    ...hasSessionQueryOptions(vaultId!),
-    enabled: !!vaultId,
-  })
+  const { hasSession } = useHasVaultSession(vaultId)
   const { data: exists = true } = useQuery({
     ...existsQueryOptions(vaultId!),
     enabled: !!vaultId,

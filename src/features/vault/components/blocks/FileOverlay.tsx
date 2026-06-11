@@ -16,6 +16,7 @@ import { StreamedFileContent } from '../ui/FileContent/FileContent'
 import { saveFile } from '@/app/instance/actions'
 import { useVaultFiles } from '../../contexts/useVaultFiles'
 import { useVaultFilesStore } from '../../stores/useVaultFilesStore'
+import { useHasVaultSession } from '../../hooks/useHasVaultSession'
 
 export function FileOverlay() {
   const vaultId = useVaultFiles()
@@ -23,7 +24,8 @@ export function FileOverlay() {
   const selectedFileId = useVaultFilesStore((s) => s.selectedFileId)
   const vaultHasChanged = selectedVaultId !== vaultId
 
-  const { data: hasSession } = useQuery(hasSessionQueryOptions(vaultId))
+  const { data: hasSession2 } = useQuery(hasSessionQueryOptions(vaultId))
+  const { hasSession } = useHasVaultSession(vaultId)
   const { data: meta } = useQuery({
     ...readVaultFileMetaQueryOptions(vaultId, selectedFileId!),
     enabled: !!selectedFileId && !vaultHasChanged,
