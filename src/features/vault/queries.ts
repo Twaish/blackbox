@@ -18,11 +18,6 @@ export const queryKeys = {
   ],
   hasSession: (vaultId: string) => [...queryKeys.all(), 'hasSession', vaultId],
   exists: (vaultId: string) => [...queryKeys.all(), 'exists', vaultId],
-
-  // Settings
-  settings: () => ['settings'],
-  shouldPreview: () => [...queryKeys.settings(), 'should-preview'],
-  viewStyle: () => [...queryKeys.settings(), 'view-style'],
 }
 
 export const readVaultFileMetaQueryOptions = (
