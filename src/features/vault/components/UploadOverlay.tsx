@@ -4,14 +4,19 @@ import { useUploadVaultFileStream } from '../mutations'
 import { useHasVaultSession } from '../hooks/useHasVaultSession'
 
 export function UploadOverlay() {
-  const [isDragging, setIsDragging] = useState(false)
   const vaultId = useVaultStore((s) => s.selectedVaultId)
-  const { hasSession: enabled } = useHasVaultSession(vaultId)
-  const { mutate: upload } = useUploadVaultFileStream(vaultId ?? '')
+  const { hasSession } = useHasVaultSession(vaultId)
+
+  if (!vaultId || !hasSession) return null
+
+  return <UploadOverlayContent vaultId={vaultId} />
+}
+
+function UploadOverlayContent({ vaultId }: { vaultId: string }) {
+  const [isDragging, setIsDragging] = useState(false)
+  const { mutate: upload } = useUploadVaultFileStream(vaultId)
 
   useEffect(() => {
-    if (!enabled) return
-
     let dragCounter = 0
 
     const onDragEnter = (e: DragEvent) => {
@@ -79,9 +84,9 @@ export function UploadOverlay() {
       window.removeEventListener('drop', onDrop)
       window.removeEventListener('paste', onPaste)
     }
-  }, [vaultId, enabled])
+  }, [vaultId])
 
-  if (!enabled || !isDragging) return null
+  if (!isDragging) return null
 
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">

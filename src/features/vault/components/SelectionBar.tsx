@@ -9,25 +9,8 @@ import { selectFolder } from '@/app/instance/actions'
 import { restoreVaultFiles } from '../actions'
 
 export function SelectionBar({ className, ...props }: ComponentProps<'div'>) {
-  const vaultId = useVaultFiles()
-  const markedFileIds = useVaultFilesStore((s) => s.markedFileIds)
-  const clearMarked = useVaultFilesStore((s) => s.clearMarked)
-
-  const { mutate: removeFiles } = useRemoveVaultFiles(vaultId)
-  const { confirm: confirmRemove } = useConfirmationDialog({
-    onConfirm: () => {
-      if (!markedFileIds.size) return
-      removeFiles([...markedFileIds])
-    },
-  })
-
-  const handleExport = async () => {
-    const outputDir = await selectFolder()
-    if (!outputDir) return
-    await restoreVaultFiles(vaultId, [...markedFileIds], outputDir)
-  }
-
-  if (!markedFileIds.size) return null
+  const markedFilesCount = useVaultFilesStore((s) => s.markedFileIds.size)
+  if (!markedFilesCount) return null
 
   return (
     <div
@@ -38,34 +21,73 @@ export function SelectionBar({ className, ...props }: ComponentProps<'div'>) {
       {...props}
     >
       <div className="text-muted-foreground flex h-full items-center border-r p-2 font-mono text-xs">
-        {markedFileIds.size} selected
+        {markedFilesCount} selected
       </div>
       <div className="flex">
-        <button
-          title="Export selected files"
-          onClick={handleExport}
-          className="hover:bg-secondary/75 flex h-full items-center justify-center gap-1 border-r px-2 text-xs"
-        >
-          <ArrowRightFromLine className="h-4 w-4" />
-          Export
-        </button>
-        <button
-          title="Remove selected files"
-          onClick={confirmRemove}
-          className="hover:bg-secondary/75 flex h-full items-center justify-center gap-1 border-r px-2 text-xs"
-        >
-          <Trash className="h-4 w-4" />
-          Delete
-        </button>
+        <SelectionBar.ExportButton />
+        <SelectionBar.DeleteButton />
       </div>
-      <button
-        title="Clear selection"
-        onClick={clearMarked}
-        className="hover:bg-secondary/75 ml-auto flex h-full items-center justify-center gap-1 px-2 text-xs"
-      >
-        <X className="h-4 w-4" />
-        Clear
-      </button>
+      <SelectionBar.ClearButton />
     </div>
+  )
+}
+
+SelectionBar.ExportButton = function ExportButton() {
+  const vaultId = useVaultFiles()
+  const markedFileIds = useVaultFilesStore((s) => s.markedFileIds)
+
+  const handleExport = async () => {
+    const outputDir = await selectFolder()
+    if (!outputDir) return
+    await restoreVaultFiles(vaultId, [...markedFileIds], outputDir)
+  }
+
+  return (
+    <button
+      title="Export selected files"
+      onClick={handleExport}
+      className="hover:bg-secondary/75 flex h-full items-center justify-center gap-1 border-r px-2 text-xs"
+    >
+      <ArrowRightFromLine className="h-4 w-4" />
+      Export
+    </button>
+  )
+}
+
+SelectionBar.DeleteButton = function DeleteButton() {
+  const vaultId = useVaultFiles()
+  const markedFileIds = useVaultFilesStore((s) => s.markedFileIds)
+
+  const { mutate: removeFiles } = useRemoveVaultFiles(vaultId)
+  const { confirm: confirmRemove } = useConfirmationDialog({
+    onConfirm: () => {
+      removeFiles([...markedFileIds])
+    },
+  })
+
+  return (
+    <button
+      title="Remove selected files"
+      onClick={confirmRemove}
+      className="hover:bg-secondary/75 flex h-full items-center justify-center gap-1 border-r px-2 text-xs"
+    >
+      <Trash className="h-4 w-4" />
+      Delete
+    </button>
+  )
+}
+
+SelectionBar.ClearButton = function ClearButton() {
+  const clearMarked = useVaultFilesStore((s) => s.clearMarked)
+
+  return (
+    <button
+      title="Clear selection"
+      onClick={clearMarked}
+      className="hover:bg-secondary/75 ml-auto flex h-full items-center justify-center gap-1 px-2 text-xs"
+    >
+      <X className="h-4 w-4" />
+      Clear
+    </button>
   )
 }

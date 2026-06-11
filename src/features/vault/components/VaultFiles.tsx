@@ -14,28 +14,37 @@ import { useHasVaultSession } from '../hooks/useHasVaultSession'
 
 export function VaultFiles() {
   const vaultId = useVaultStore((s) => s.selectedVaultId)
-  const { hasSession } = useHasVaultSession(vaultId)
-  const { data: exists = true } = useQuery({
-    ...existsQueryOptions(vaultId!),
-    enabled: !!vaultId,
-  })
-  const viewStyle = useSettingsStore((s) => s.viewStyle)
 
   if (!vaultId) return <EmptyVaultsView />
+
+  return <VaultFilesContent vaultId={vaultId} />
+}
+
+function VaultFilesContent({ vaultId }: { vaultId: string }) {
+  const { data: exists = true } = useQuery({
+    ...existsQueryOptions(vaultId),
+    enabled: !!vaultId,
+  })
+
+  if (!exists) return <ChangeLocationView />
+
+  return (
+    <VaultFilesContext.Provider value={vaultId}>
+      <VaultFilesBody vaultId={vaultId} />
+    </VaultFilesContext.Provider>
+  )
+}
+function VaultFilesBody({ vaultId }: { vaultId: string }) {
+  const { hasSession } = useHasVaultSession(vaultId)
+  const viewStyle = useSettingsStore((s) => s.viewStyle)
 
   const FileView = viewStyle === 'grid' ? FileGridView : FileListView
 
   return (
-    <VaultFilesContext.Provider value={vaultId}>
-      {exists ? (
-        <>
-          {hasSession ? <FileView /> : <UnlockView />}
-          <FileOverlay />
-          <SelectionBar />
-        </>
-      ) : (
-        <ChangeLocationView />
-      )}
-    </VaultFilesContext.Provider>
+    <>
+      {hasSession ? <FileView /> : <UnlockView />}
+      <FileOverlay />
+      <SelectionBar />
+    </>
   )
 }

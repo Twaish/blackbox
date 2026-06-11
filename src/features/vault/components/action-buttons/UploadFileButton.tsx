@@ -9,9 +9,13 @@ export function UploadFileButton() {
   const vaultId = useVaultStore((s) => s.selectedVaultId)
   const { hasSession } = useHasVaultSession(vaultId)
 
-  const { mutate } = useUploadVaultFile(vaultId ?? '')
+  if (!vaultId || !hasSession) return null
 
-  if (!hasSession) return
+  return <UploadFileButtonContent vaultId={vaultId} />
+}
+
+function UploadFileButtonContent({ vaultId }: { vaultId: string }) {
+  const { mutate } = useUploadVaultFile(vaultId)
 
   const handleUpload = async () => {
     const filepath = await selectFile()

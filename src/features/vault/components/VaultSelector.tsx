@@ -2,7 +2,7 @@ import { ComponentProps, useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { cn } from '@/utils/tailwind'
 import { useVaultStore } from '../stores/useVaultStore'
-import { getVaultsQueryOptions, hasSessionQueryOptions } from '../queries'
+import { getVaultsQueryOptions } from '../queries'
 import {
   ArrowRightFromLine,
   ChevronDown,
@@ -24,7 +24,6 @@ import { AddVaultButton } from './action-buttons/AddVaultButton'
 import { ImportVaultButton } from './action-buttons/ImportVaultButton'
 import { Highlight } from '@/components/Highlight'
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 import { openFolder, selectFolder } from '@/app/instance/actions'
 import {
   useChangePassphrase,
@@ -45,28 +44,14 @@ import { SearchField } from './ui/SearchField'
 import { useHasVaultSession } from '../hooks/useHasVaultSession'
 
 type VaultSelectorStore = {
-  vault?: VaultEntry
   query: string
-  setVault: (vault?: VaultEntry) => void
   setQuery: (query: string) => void
 }
 
-export const useVaultSelectorStore = create<VaultSelectorStore>()(
-  persist(
-    (set) => ({
-      vault: undefined,
-      query: '',
-      setVault: (vault) => set({ vault }),
-      setQuery: (query) => set({ query }),
-    }),
-    {
-      name: 'vault-selector',
-      partialize: (state) => ({
-        vault: state.vault,
-      }),
-    },
-  ),
-)
+const useVaultSelectorStore = create<VaultSelectorStore>((set) => ({
+  query: '',
+  setQuery: (query) => set({ query }),
+}))
 
 export function VaultSelector({
   ...props
@@ -98,40 +83,31 @@ VaultSelector.SelectedVault = function SelectedVault({
   ...props
 }: ComponentProps<'button'>) {
   const { data: vaults, isLoading } = useQuery(getVaultsQueryOptions())
+
+  const selectedVaultId = useVaultStore((s) => s.selectedVaultId)
   const setSelectedVault = useVaultStore((s) => s.setSelectedVault)
 
-  const vault = useVaultSelectorStore((s) => s.vault)
-  const setVault = useVaultSelectorStore((s) => s.setVault)
+  const vault = useMemo(
+    () => vaults?.find((v) => v.id === selectedVaultId),
+    [vaults, selectedVaultId],
+  )
 
   useEffect(() => {
     if (isLoading) return
 
     if (!vaults?.length) {
-      setVault(undefined)
-      setSelectedVault(null)
+      if (selectedVaultId !== null) {
+        setSelectedVault(null)
+      }
       return
     }
 
-    const updatedVault = vaults.find((v) => v.id === vault?.id)
+    const exists = vaults.some((v) => v.id === selectedVaultId)
 
-    // Vault was removed
-    if (!updatedVault) {
-      const nextVault = vaults[0]
-      setVault(nextVault)
-      setSelectedVault(nextVault.id)
-      return
+    if (!exists) {
+      setSelectedVault(vaults[0].id)
     }
-
-    // Refresh selected vault data (e.g. renamed vault)
-    if (
-      updatedVault.name !== vault?.name ||
-      updatedVault.location !== vault.location
-    ) {
-      setVault(updatedVault)
-    }
-
-    setSelectedVault(updatedVault.id)
-  }, [isLoading, vaults, vault?.id])
+  }, [isLoading, vaults, selectedVaultId, setSelectedVault])
 
   return (
     <button
@@ -160,6 +136,7 @@ VaultSelector.SearchField = function VaultSearchField() {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search vaults..."
+        className="w-full"
       />
     </SearchField>
   )
@@ -168,13 +145,7 @@ VaultSelector.SearchField = function VaultSearchField() {
 VaultSelector.Items = function Items() {
   const { data: vaults, isLoading } = useQuery(getVaultsQueryOptions())
   const setSelectedVault = useVaultStore((s) => s.setSelectedVault)
-  const setVault = useVaultSelectorStore((s) => s.setVault)
   const query = useVaultSelectorStore((s) => s.query)
-
-  const handleVaultChange = (vault: VaultEntry) => {
-    setVault(vault)
-    setSelectedVault(vault.id)
-  }
 
   const filteredVaults = useMemo(() => {
     if (!vaults?.length) return []
@@ -183,9 +154,9 @@ VaultSelector.Items = function Items() {
 
     if (!normalizedQuery) return vaults
 
-    return vaults.filter((vault) => {
-      return vault.name.toLowerCase().includes(normalizedQuery)
-    })
+    return vaults.filter((vault) =>
+      vault.name.toLowerCase().includes(normalizedQuery),
+    )
   }, [vaults, query])
 
   return (
@@ -198,24 +169,21 @@ VaultSelector.Items = function Items() {
       >
         {isLoading ? (
           <div>Loading...</div>
+        ) : filteredVaults.length ? (
+          filteredVaults.map((vault) => (
+            <VaultItem
+              key={vault.id}
+              vault={vault}
+              onClick={() => setSelectedVault(vault.id)}
+            />
+          ))
         ) : (
-          <>
-            {filteredVaults.length ? (
-              filteredVaults.map((vaultEntry) => (
-                <VaultItem
-                  key={vaultEntry.id}
-                  vault={vaultEntry}
-                  onClick={() => handleVaultChange(vaultEntry)}
-                />
-              ))
-            ) : (
-              <div className="text-muted-foreground flex items-center justify-center px-2 py-12 text-xs">
-                No vaults found
-              </div>
-            )}
-          </>
+          <div className="text-muted-foreground flex items-center justify-center px-2 py-12 text-xs">
+            No vaults found
+          </div>
         )}
       </div>
+
       <div className="from-background via-background/90 pointer-events-none absolute right-0 bottom-0 left-0 h-12 bg-linear-to-t via-40% to-transparent" />
     </div>
   )
@@ -227,17 +195,17 @@ function VaultItem({
   children,
   onClick,
   ...props
-}: { vault: VaultEntry } & ComponentProps<'div'>) {
-  const selectedVault = useVaultSelectorStore((s) => s.vault)
-  const query = useVaultSelectorStore((s) => s.query)
+}: {
+  vault: VaultEntry
+} & ComponentProps<'div'>) {
+  const selected = useVaultStore((s) => s.selectedVaultId === vault.id)
 
   return (
     <div
       tabIndex={0}
       className={cn(
         'hover:bg-secondary/20 focus-visible:bg-secondary/50 flex w-full items-center px-2 py-1 outline-none',
-        selectedVault?.id === vault.id &&
-          'bg-secondary/35 border-primary border-l',
+        selected && 'bg-secondary/35 border-primary border-l',
         className,
       )}
       onClick={onClick}
@@ -251,18 +219,26 @@ function VaultItem({
       <div className="flex min-w-0 flex-1 flex-col items-start">
         <div className="flex w-full flex-col items-start">
           <div className="flex w-full items-center gap-1">
-            <span className="font-mono text-xs">
-              <Highlight text={vault.name} term={query} />
-            </span>
+            <VaultItem.Title text={vault.name} />
             <SessionIndicator vaultId={vault.id} />
           </div>
+
           <span className="text-muted-foreground text-[11px]">
             {vault.location}
           </span>
         </div>
       </div>
+
       <VaultItem.Options vault={vault} />
     </div>
+  )
+}
+VaultItem.Title = function Title({ text }: { text: string }) {
+  const query = useVaultSelectorStore((s) => s.query)
+  return (
+    <span className="font-mono text-xs">
+      <Highlight text={text} term={query} />
+    </span>
   )
 }
 VaultItem.Options = function Options({ vault }: { vault: VaultEntry }) {

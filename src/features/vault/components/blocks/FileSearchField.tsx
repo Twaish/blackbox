@@ -9,6 +9,12 @@ export function FileSearchField() {
   const vaultId = useVaultStore((s) => s.selectedVaultId)
   const { hasSession } = useHasVaultSession(vaultId)
 
+  if (!hasSession) return
+
+  return <FileSearchFieldContent />
+}
+
+function FileSearchFieldContent() {
   const query = useVaultFilesStore((s) => s.searchQuery)
   const setQuery = useVaultFilesStore((s) => s.setSearchQuery)
 
@@ -30,8 +36,6 @@ export function FileSearchField() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
-  if (!hasSession) return
-
   return (
     <SearchField className="h-full border-l">
       <SearchField.Icon />
@@ -46,7 +50,7 @@ export function FileSearchField() {
         className="no-drag h-full border-none text-xs outline-0"
       />
       <div className="absolute right-0 mx-1 my-auto">
-        <Kbd keys={['ctrl', 'f']}></Kbd>
+        <Kbd>ctrl + f</Kbd>
       </div>
     </SearchField>
   )
