@@ -2,15 +2,7 @@ import { Modules } from '@/helpers/ipc/types'
 import { eventIterator, os } from '@orpc/server'
 import { MemoryPublisher } from '@orpc/experimental-publisher/memory'
 import { getTasksOutputSchema, taskIdSchema, taskSchema } from './schemas'
-
-export const subscriptionHandler = <T>(
-  iteratorFactory: (signal?: AbortSignal) => AsyncIterable<T>,
-) =>
-  async function* ({ signal }: { signal?: AbortSignal }) {
-    for await (const payload of iteratorFactory(signal)) {
-      yield payload
-    }
-  }
+import { subscriptionHandler } from '@/utils/orpc'
 
 export function createTasksRouters({ TaskService }: Modules) {
   const taskEventPublisher = new MemoryPublisher<{
