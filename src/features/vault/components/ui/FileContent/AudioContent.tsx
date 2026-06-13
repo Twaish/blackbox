@@ -192,7 +192,12 @@ export function AudioContent({
   return (
     <div className={cn('flex w-full flex-col gap-3', className, 'max-w-55')}>
       <AudioContent.AudioSource {...props} />
-      <FilePreview className="w-full" vaultId={vaultId} meta={meta} />
+      <FilePreview
+        className="w-full"
+        forcePreview
+        vaultId={vaultId}
+        meta={meta}
+      />
       <div className="flex flex-col items-center">
         {audioMeta?.title && (
           <span className="text-center leading-none">{audioMeta.title}</span>
