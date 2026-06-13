@@ -29,14 +29,11 @@ export function StreamedFileContent({
   const urlRef = useRef<string | null>(null)
 
   useEffect(() => {
+    const previousUrl = urlRef.current
+
     activeControllerRef.current?.abort()
     setUrl(null)
     setTextContent(null)
-
-    if (urlRef.current) {
-      URL.revokeObjectURL(urlRef.current)
-      urlRef.current = null
-    }
 
     const controller = new AbortController()
     activeControllerRef.current = controller
@@ -57,6 +54,7 @@ export function StreamedFileContent({
       streamVaultFile(
         streamOptions({
           onChunk(chunk) {
+            if (controller.signal.aborted) return
             accumulatedText += decoder.decode(chunk, { stream: true })
             setTextContent(accumulatedText)
           },
@@ -84,6 +82,10 @@ export function StreamedFileContent({
 
     return () => {
       controller.abort()
+
+      if (previousUrl) {
+        URL.revokeObjectURL(previousUrl)
+      }
     }
   }, [vaultId, meta.fileId, isText])
 
@@ -92,6 +94,7 @@ export function StreamedFileContent({
       if (urlRef.current) {
         URL.revokeObjectURL(urlRef.current)
         urlRef.current = null
+        setUrl(null)
       }
     }
   }, [])
