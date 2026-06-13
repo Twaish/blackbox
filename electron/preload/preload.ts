@@ -29,6 +29,8 @@ const streams = new Map<string, StreamState>()
 const abortControllers = new Map<string, AbortController>()
 
 function cleanupStream(streamId: string) {
+  const stream = streams.get(streamId)
+  stream?.resolve()
   streams.delete(streamId)
   abortControllers.delete(streamId)
 }
@@ -39,9 +41,6 @@ function abortStream(streamId: string) {
     controller.abort()
   }
   ipcRenderer.send('stream:abort', streamId)
-
-  const stream = streams.get(streamId)
-  stream?.resolve()
 
   cleanupStream(streamId)
 }
