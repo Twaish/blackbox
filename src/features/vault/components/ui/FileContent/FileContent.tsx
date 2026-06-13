@@ -26,11 +26,17 @@ export function StreamedFileContent({
   const isText = mime.startsWith('text/') || mime === 'application/json'
 
   const activeControllerRef = useRef<AbortController | null>(null)
+  const urlRef = useRef<string | null>(null)
 
   useEffect(() => {
     activeControllerRef.current?.abort()
     setUrl(null)
     setTextContent(null)
+
+    if (urlRef.current) {
+      URL.revokeObjectURL(urlRef.current)
+      urlRef.current = null
+    }
 
     const controller = new AbortController()
     activeControllerRef.current = controller
@@ -60,10 +66,17 @@ export function StreamedFileContent({
       streamVaultFile(
         streamOptions({
           async onDone(blob) {
+            if (controller.signal.aborted) return
+
             if (mime.startsWith('audio/')) {
-              setAudioMetadata(await extractID3Metadata(blob))
+              const meta = await extractID3Metadata(blob)
+              if (controller.signal.aborted) return
+              setAudioMetadata(meta)
             }
-            setUrl(URL.createObjectURL(blob))
+
+            const objUrl = URL.createObjectURL(blob)
+            urlRef.current = objUrl
+            setUrl(objUrl)
           },
         }),
       )
@@ -71,9 +84,17 @@ export function StreamedFileContent({
 
     return () => {
       controller.abort()
-      if (url) URL.revokeObjectURL(url)
     }
   }, [vaultId, meta.fileId, isText])
+
+  useEffect(() => {
+    return () => {
+      if (urlRef.current) {
+        URL.revokeObjectURL(urlRef.current)
+        urlRef.current = null
+      }
+    }
+  }, [])
 
   if (isText && textContent != null)
     return <TextContent className={className}>{textContent}</TextContent>
