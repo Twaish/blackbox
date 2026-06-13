@@ -7,7 +7,7 @@
   "main": "./out/main/index.js",
   "author": "Twaish",
   "repository": "https://github.com/Twaish/blackbox",
-  "license": "MIT",
+  "license": "GPL-3.0-only",
   "private": true,
   "scripts": {
     "dev": "electron-vite dev -- --trace-warnings",
