@@ -44,14 +44,16 @@ export async function streamVaultFile({
       if (onDone) chunks.push(chunk)
     },
     onEnd: (err) => {
-      if (signal?.aborted) return
-
-      if (err) {
+      if (err && !signal?.aborted) {
         const e = new Error(err)
         onError?.(e)
+        chunks.length = 0
         throw e
       }
-
+      if (signal?.aborted) {
+        chunks.length = 0
+        return
+      }
       if (onDone) {
         const blob = new Blob(chunks as BlobPart[])
         chunks.length = 0

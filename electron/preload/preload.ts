@@ -39,6 +39,10 @@ function abortStream(streamId: string) {
     controller.abort()
   }
   ipcRenderer.send('stream:abort', streamId)
+
+  const stream = streams.get(streamId)
+  stream?.resolve()
+
   cleanupStream(streamId)
 }
 
