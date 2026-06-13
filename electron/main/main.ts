@@ -21,6 +21,7 @@ import { VaultCrypto } from './features/vault/adapters/VaultCrypto'
 import { VaultPaths } from './features/vault/adapters/VaultPaths'
 import { TaskService } from './app/tasks/application/services/TaskService'
 import { UploadManager } from './features/vault/adapters/UploadManager'
+import { UpdateService } from './app/instance/UpdateService'
 
 app.commandLine.appendSwitch('trace-warnings')
 app.whenReady().then(async () => {
@@ -45,6 +46,8 @@ app.whenReady().then(async () => {
       },
       settingsRegistry,
     )
+
+    const updateService = new UpdateService()
 
     const taskService = new TaskService()
 
@@ -84,6 +87,7 @@ app.whenReady().then(async () => {
       VaultRegistry: vaultRegistry,
       VaultSessions: vaultSessions,
       UploadManager: uploadManager,
+      UpdateService: updateService,
     }
 
     app.on('before-quit', async () => {

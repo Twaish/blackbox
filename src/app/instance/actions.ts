@@ -1,4 +1,6 @@
 import { ipc } from '@/core/ipc'
+import { createEventHandler } from '@/utils/orpc'
+import { UpdateStatus } from '@shared/types/instance'
 
 export function getAppName() {
   return ipc.client.instance.name()
@@ -27,3 +29,23 @@ export async function saveFile(filename: string): Promise<string | null> {
 export async function selectFile(): Promise<string | null> {
   return await ipc.client.instance.selectFile()
 }
+
+export async function checkForUpdates(): Promise<UpdateStatus> {
+  return (await ipc.client.instance.checkForUpdates()) as UpdateStatus
+}
+
+export async function downloadUpdate(): Promise<void> {
+  return await ipc.client.instance.downloadUpdate()
+}
+
+export async function quitAndInstall(): Promise<void> {
+  return await ipc.client.instance.quitAndInstall()
+}
+
+export async function getUpdateStatus(): Promise<UpdateStatus> {
+  return (await ipc.client.instance.getUpdateStatus()) as UpdateStatus
+}
+
+export const onStatus = createEventHandler('onStatus', () =>
+  ipc.client.instance.onStatus(),
+)

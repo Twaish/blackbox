@@ -1,7 +1,7 @@
 import { app, dialog, shell } from 'electron'
 import path from 'path'
 import fs from 'fs'
-import { os } from '@orpc/server'
+import { eventIterator, os } from '@orpc/server'
 import { Modules } from '@/helpers/ipc/types'
 import {
   nameOutputSchema,
@@ -9,10 +9,20 @@ import {
   saveFileInputSchema,
   selectFileOutputSchema,
   selectFolderOutputSchema,
+  updateStatusSchema,
   versionOutputSchema,
 } from './schemas'
+import { MemoryPublisher } from '@orpc/experimental-publisher/memory'
+import { UpdateStatus } from '../types/UpdateStatus'
+import { subscriptionHandler } from '@/utils/orpc'
 
-export function createInstanceRouters({ appInfo }: Modules) {
+export function createInstanceRouters({ appInfo, UpdateService }: Modules) {
+  const updateEventPublisher = new MemoryPublisher<{
+    status: UpdateStatus
+  }>()
+  UpdateService.on('status', (status: UpdateStatus) =>
+    updateEventPublisher.publish('status', status),
+  )
   return {
     name: os.output(nameOutputSchema).handler(() => appInfo.name),
     version: os.output(versionOutputSchema).handler(() => appInfo.version),
@@ -58,5 +68,25 @@ export function createInstanceRouters({ appInfo }: Modules) {
 
       return result.filePaths[0]
     }),
+    checkForUpdates: os.output(updateStatusSchema).handler(async () => {
+      await UpdateService.checkForUpdates()
+      return UpdateService.getStatus()
+    }),
+    downloadUpdate: os.handler(async () => {
+      await UpdateService.downloadUpdate()
+    }),
+    quitAndInstall: os.handler(() => {
+      UpdateService.quitAndInstall()
+    }),
+    getUpdateStatus: os.output(updateStatusSchema).handler(() => {
+      return UpdateService.getStatus()
+    }),
+    onStatus: os
+      .output(eventIterator(updateStatusSchema))
+      .handler(
+        subscriptionHandler((signal) =>
+          updateEventPublisher.subscribe('status', { signal }),
+        ),
+      ),
   }
 }

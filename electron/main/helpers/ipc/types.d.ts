@@ -9,6 +9,7 @@ import { VaultRegistry } from '@/features/vault/adapters/VaultRegistry'
 import { VaultSessions } from '@/features/vault/adapters/VaultSessions'
 import { ITaskService } from '@/app/tasks/application/interfaces/ITaskService'
 import { UploadManager } from '@/features/vault/adapters/UploadManager'
+import { UpdateService } from '@/app/instance/UpdateService'
 
 declare interface Modules {
   ElectronWindow: ElectronWindow
@@ -21,4 +22,5 @@ declare interface Modules {
   VaultSessions: VaultSessions
   TaskService: ITaskService
   UploadManager: UploadManager
+  UpdateService: UpdateService
 }
