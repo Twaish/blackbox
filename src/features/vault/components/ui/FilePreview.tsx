@@ -61,12 +61,15 @@ export const FilePreview = memo(function FilePreview({
   meta,
   vaultId,
   className,
+  forcePreview = false,
   ...props
 }: {
   meta: VaultFileMeta
   vaultId: string
+  forcePreview?: boolean
 } & (ComponentProps<'img'> | ComponentProps<'svg'>)) {
-  const shouldPreview = useSettingsStore((s) => s.shouldPreview)
+  const shouldPreviewSetting = useSettingsStore((s) => s.shouldPreview)
+  const shouldPreview = forcePreview || shouldPreviewSetting
   const viewStyle = useSettingsStore((s) => s.viewStyle)
   const mime = meta.original.mime
   const isImage = mime.startsWith('image/')
