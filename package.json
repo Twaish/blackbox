@@ -1,11 +1,12 @@
 {
   "name": "blackbox",
   "productName": "Blackbox",
-  "appId": "axiom.app.blackbox",
+  "appId": "twaish.app.blackbox",
   "version": "1.0.0",
   "description": "",
   "main": "./out/main/index.js",
-  "author": "Axiom",
+  "author": "Twaish",
+  "repository": "https://github.com/Twaish/blackbox",
   "license": "MIT",
   "private": true,
   "scripts": {
@@ -15,7 +16,9 @@
     "build": "electron-vite build",
     "preview": "electron-vite preview",
     "release": "electron-builder --config electron-builder.config.ts",
+    "release:local": "electron-builder --config electron-builder.config.ts --publish never",
     "build:release": "npm run build && npm run release",
+    "build:release:local": "npm run build && npm run release:local",
     "lint": "eslint .",
     "format": "prettier --check .",
     "format:write": "prettier --write ."
