@@ -1,5 +1,5 @@
-import { AsyncIteratorClass, consumeEventIterator } from '@orpc/client'
 import { ipc } from '@/core/ipc'
+import { createEventHandler } from '@/utils/orpc'
 
 export async function getTasks() {
   return ipc.client.tasks.get()
@@ -7,23 +7,6 @@ export async function getTasks() {
 
 export async function abortTask(id: string) {
   return ipc.client.tasks.abort(id)
-}
-
-type EventFactory<T = any> = () => Promise<AsyncIteratorClass<T>>
-
-function createEventHandler<T = any>(
-  name: string,
-  eventFactory: EventFactory<T>,
-) {
-  return (callback: (event: T) => void) => {
-    return consumeEventIterator(eventFactory(), {
-      onEvent: callback,
-      onError: (err) => {
-        if (err.name === 'AbortError') return
-        console.error(`${name} error`, err)
-      },
-    })
-  }
 }
 
 export const onTaskStarted = createEventHandler('onTaskStarted', () =>
