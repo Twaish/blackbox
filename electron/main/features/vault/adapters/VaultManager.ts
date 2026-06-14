@@ -203,11 +203,7 @@ export class VaultManager implements IVaultManager {
     location,
     name,
     passphrase,
-  }: {
-    location: string
-    name: string
-    passphrase: string
-  }): Promise<void> {
+  }: CreateVaultArgs): Promise<void> {
     const vaultPath = join(location, name)
 
     if (existsSync(vaultPath)) {
@@ -293,12 +289,6 @@ export class VaultManager implements IVaultManager {
     )
 
     return matchedIds
-
-    // await Promise.all(
-    //   allIds.map()
-    // )
-
-    // return this.files.list(this.registry.get(vaultId))
   }
 
   async startUpload({

@@ -84,7 +84,7 @@ export const useRemoveSession = (vaultId: string) =>
 
 export const useCreateVault = () =>
   useMutation({
-    mutationFn: async (vault: Partial<CreateVaultDTO>) => {
+    mutationFn: async (vault: Partial<CreateVaultArgs>) => {
       if (!vault.name) throw new Error('Missing required name')
       if (!vault.location) throw new Error(`Missing required location`)
       if (!vault.passphrase) throw new Error(`Missing required passphrase`)

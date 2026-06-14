@@ -34,7 +34,7 @@ export const changeLocationInputSchema = z.object({
   location: pathSchema,
 })
 
-export const createInputSchema = z.object({
+export const createInputSchema: z.ZodType<CreateVaultArgs> = z.object({
   location: z.string(),
   name: z.string(),
   passphrase: passphraseSchema,
