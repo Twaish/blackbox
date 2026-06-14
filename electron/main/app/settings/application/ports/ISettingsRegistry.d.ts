@@ -1,6 +1,4 @@
-import { RuntimeSchema, Schema, SettingsInterface } from './ISettingsBuilder'
-
-export interface ISettingsRegistry {
+interface ISettingsRegistry {
   register(namespace: string, provider: SettingsInterface): void
 
   get(

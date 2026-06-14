@@ -1,10 +1,3 @@
-import {
-  RuntimeSchema,
-  Schema,
-  SettingsInterface,
-} from '../../application/ports/ISettingsBuilder'
-import { ISettingsRegistry } from '../../application/ports/ISettingsRegistry'
-
 export class SettingsRegistry implements ISettingsRegistry {
   private providers = new Map<string, SettingsInterface>()
 

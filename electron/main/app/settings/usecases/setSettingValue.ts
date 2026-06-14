@@ -1,5 +1,3 @@
-import { ISettingsRegistry } from '../application/ports/ISettingsRegistry'
-
 export default class SetSettingValue {
   constructor(private readonly registry: ISettingsRegistry) {}
 

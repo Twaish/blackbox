@@ -1,4 +1,4 @@
-export type Schema = Record<
+type Schema = Record<
   string,
   {
     name?: string
@@ -9,27 +9,27 @@ export type Schema = Record<
   }
 >
 
-export type OnDiskValue<T> = 'default' extends keyof T
+type OnDiskValue<T> = 'default' extends keyof T
   ? T['default']
   : T extends { secret: true }
     ? { __encrypted: true; value: string }
     : unknown
 
-export type OnDiskSchema<T extends Schema> = {
+type OnDiskSchema<T extends Schema> = {
   [K in keyof T]: OnDiskValue<T[K]>
 }
 
-export type RuntimeValue<T> = 'default' extends keyof T
+type RuntimeValue<T> = 'default' extends keyof T
   ? T['default']
   : T extends { secret: true }
     ? string | undefined
     : unknown
 
-export type RuntimeSchema<T extends Schema = Schema> = {
+type RuntimeSchema<T extends Schema = Schema> = {
   [K in keyof T]: RuntimeValue<T[K]>
 }
 
-export type SettingsInterface<T extends Schema = Schema> = {
+type SettingsInterface<T extends Schema = Schema> = {
   namespace: string
   schema: Schema
   init(): Promise<SettingsInterface<T>>
@@ -42,7 +42,7 @@ export type SettingsInterface<T extends Schema = Schema> = {
   [P in keyof T as P]: RuntimeSchema<T>[P]
 }
 
-export interface ISettingsBuilder {
+interface ISettingsBuilder {
   defineSettings<T extends Schema>(
     namespace: string,
     filename: string,

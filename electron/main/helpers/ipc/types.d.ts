@@ -3,8 +3,6 @@ import { BrowserWindow } from 'electron'
 import { AppInfo } from '@/core/types'
 import { ElectronWindow } from '@/core/ElectronWindow'
 
-import { ISettingsBuilder } from '@/app/settings/application/ports/ISettingsBuilder'
-import { ISettingsRegistry } from '@/app/settings/application/ports/ISettingsRegistry'
 import { UpdateService } from '@/app/instance/UpdateService'
 
 declare interface Modules {
