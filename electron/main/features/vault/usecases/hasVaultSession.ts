@@ -1,4 +1,4 @@
-import { VaultSessions } from '../adapters/VaultSessions'
+import { VaultSessions } from '../infrastructure/adapters/VaultSessions'
 
 export default class HasVaultSession {
   constructor(private readonly sessions: VaultSessions) {}

@@ -1,4 +1,4 @@
-import { VaultRegistry } from '../adapters/VaultRegistry'
+import { VaultRegistry } from '../infrastructure/adapters/VaultRegistry'
 
 export default class UnlinkVault {
   constructor(private readonly registry: VaultRegistry) {}

@@ -20,8 +20,7 @@ export class VaultCrypto {
   }
 
   encrypt(data: Buffer, key: Buffer): Buffer {
-    const iv = randomBytes(IV_LENGTH)
-    const cipher = createCipheriv(ALGO, key, iv)
+    const { iv, cipher } = this.createEncryptionStream(key)
     const encrypted = Buffer.concat([cipher.update(data), cipher.final()])
     const tag = cipher.getAuthTag()
     return Buffer.concat([iv, encrypted, tag])
