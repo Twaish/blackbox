@@ -1,6 +1,6 @@
-import { EventEmitter } from 'events'
+type EventEmitterType = import('events').EventEmitter
 
-export interface ITaskService extends EventEmitter {
+interface ITaskService extends EventEmitterType {
   getTasks(): Record<string, Task>
   startTask(
     task: { label: string; description: string },

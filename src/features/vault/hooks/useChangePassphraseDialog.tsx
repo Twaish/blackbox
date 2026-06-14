@@ -20,7 +20,7 @@ const DEFAULT_DRAFT = {
   confirmNewPassphrase: '',
 }
 
-export const useVaultEditStore = create<VaultEditState>((set, get) => ({
+export const useVaultEditStore = create<VaultEditState>((set) => ({
   draft: DEFAULT_DRAFT,
   update: (patch) =>
     set((s) => {

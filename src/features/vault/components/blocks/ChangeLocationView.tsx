@@ -1,4 +1,4 @@
-import { useChangeVaultLocation, useUnlockVault } from '../../mutations'
+import { useChangeVaultLocation } from '../../mutations'
 import { EmptyIndicator } from '../ui/EmptyIndicator'
 import { useVaultFiles } from '../../contexts/useVaultFiles'
 import { selectFolder } from '@/app/instance/actions'

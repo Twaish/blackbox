@@ -4,8 +4,6 @@ import { createReadStream, createWriteStream, type WriteStream } from 'node:fs'
 import { stat, unlink, writeFile } from 'node:fs/promises'
 import mime from 'mime-types'
 
-import { ITaskService } from '@/app/tasks/application/interfaces/ITaskService'
-
 export class VaultUploads implements IVaultUploads {
   private uploads = new Map<string, VaultUploadSession>()
 

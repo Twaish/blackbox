@@ -179,7 +179,7 @@ AddVaultDialog.Footer = function Footer() {
       onAdd?.(store.getState().draft)
       closeAddVaultDialog()
     } catch (err) {
-      console.log(`Something went wrong creating vault`)
+      console.log(`Something went wrong creating vault`, err)
     }
   }
 

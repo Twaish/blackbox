@@ -145,7 +145,7 @@ ChangePassphraseDialog.Footer = function Footer() {
       await onSubmit?.(passphrases)
       closeChangePassphraseDialog()
     } catch (err) {
-      console.log(`Something went wrong changing vault passphrase`)
+      console.log(`Something went wrong changing vault passphrase`, err)
     }
   }
 

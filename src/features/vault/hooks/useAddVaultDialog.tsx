@@ -9,7 +9,7 @@ type VaultEditState = {
   reset: () => void
 }
 
-export const useVaultEditStore = create<VaultEditState>((set, get) => ({
+export const useVaultEditStore = create<VaultEditState>((set) => ({
   draft: {},
   update: (patch) =>
     set((s) => {

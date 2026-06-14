@@ -70,7 +70,7 @@ export const useVaultFilesStore = create<VaultFilesStore>((set, get) => ({
       const start = Math.min(currentIndex, anchorIndex)
       const end = Math.max(currentIndex, anchorIndex)
 
-      let newSelection = new Set(baseMarkedFileIds)
+      const newSelection = new Set(baseMarkedFileIds)
       for (let i = start; i <= end; i++) {
         newSelection.add(files[i])
       }
@@ -79,7 +79,7 @@ export const useVaultFilesStore = create<VaultFilesStore>((set, get) => ({
         markedFileIds: newSelection,
       })
     } else if (isCtrl) {
-      let newSelection = new Set(markedFileIds)
+      const newSelection = new Set(markedFileIds)
       if (newSelection.has(fileId)) {
         newSelection.delete(fileId)
       } else {

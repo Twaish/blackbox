@@ -1,6 +1,5 @@
 import { ipc } from '@/core/ipc'
 import { createEventHandler } from '@/utils/orpc'
-import { UpdateStatus } from '@shared/types/instance'
 
 export function getAppName() {
   return ipc.client.instance.name()

@@ -1,20 +1,15 @@
+import { ComponentProps, createContext, useContext } from 'react'
+import { UseBoundStore, StoreApi } from 'zustand'
+import { VisuallyHidden } from 'radix-ui'
 import {
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { useMutation } from '@tanstack/react-query'
-import { VisuallyHidden } from 'radix-ui'
-import { ComponentProps, createContext, useContext, useState } from 'react'
 import { DialogFooterHint } from '@/components/dialog/DialogFooterHint'
-import { selectFolder } from '@/app/instance/actions'
-import { createVault, addExistingVault } from '../actions'
-import { cn } from '@/utils/tailwind'
-import { UseBoundStore, StoreApi } from 'zustand'
-import { Eye, EyeClosed, EyeOff, Folder, KeyRound } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { closeAddVaultDialog } from '../hooks/useAddVaultDialog'
+import { cn } from '@/utils/tailwind'
 import { closeRenameVaultDialog } from '../hooks/useRenameVaultDialog'
 
 type Store = UseBoundStore<
@@ -101,7 +96,7 @@ RenameVaultDialog.Footer = function Footer() {
       onRename?.(store.getState().name)
       closeRenameVaultDialog()
     } catch (err) {
-      console.log(`Something went wrong renaming vault`)
+      console.log(`Something went wrong renaming vault`, err)
     }
   }
 

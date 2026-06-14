@@ -1,6 +1,5 @@
 import { autoUpdater } from 'electron-updater'
 import { EventEmitter } from 'events'
-import { UpdateStatus } from './types/UpdateStatus'
 import { is } from '@electron-toolkit/utils'
 
 export class UpdateService extends EventEmitter {

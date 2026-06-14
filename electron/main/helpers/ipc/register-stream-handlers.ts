@@ -55,7 +55,7 @@ function registerUpload<TPayload>({
   handler: {
     start(payload: TPayload): Promise<void | string>
     chunk(streamId: string, chunk: ArrayBuffer): Promise<void>
-    finish(streamId: string): Promise<any>
+    finish(streamId: string): Promise<string>
     abort?(streamId: string): Promise<void> | void
   }
 }) {

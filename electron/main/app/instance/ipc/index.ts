@@ -13,7 +13,6 @@ import {
   versionOutputSchema,
 } from './schemas'
 import { MemoryPublisher } from '@orpc/experimental-publisher/memory'
-import { UpdateStatus } from '../types/UpdateStatus'
 import { subscriptionHandler } from '@/utils/orpc'
 
 export function createInstanceRouters({ appInfo, UpdateService }: Modules) {

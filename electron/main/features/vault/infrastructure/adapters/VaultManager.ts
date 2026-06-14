@@ -1,19 +1,17 @@
 import { randomUUID, randomBytes } from 'node:crypto'
-import { join } from 'path'
 import { access, mkdir, writeFile } from 'node:fs/promises'
-import path from 'node:path'
-import { ITaskService } from '@/app/tasks/application/interfaces/ITaskService'
 import { existsSync } from 'node:fs'
+import path from 'node:path'
 
 export class VaultManager implements IVaultManager {
   constructor(
     private registry: IVaultRegistry,
     private sessions: IVaultSessions,
-    private files: IVaultFileStore,
+    private uploads: IVaultUploads,
     private crypto: IVaultCrypto,
+    private files: IVaultFileStore,
     private paths: IVaultPaths,
     private tasks: ITaskService,
-    private uploads: IVaultUploads,
   ) {}
 
   async addFile({
@@ -198,7 +196,7 @@ export class VaultManager implements IVaultManager {
     name,
     passphrase,
   }: CreateVaultArgs): Promise<void> {
-    const vaultPath = join(location, name)
+    const vaultPath = path.join(location, name)
 
     if (existsSync(vaultPath)) {
       throw new Error(`Vault at path ${vaultPath} already exists`)
@@ -214,8 +212,6 @@ export class VaultManager implements IVaultManager {
     const kek = this.crypto.deriveKey(passphrase, salt)
     const dek = this.crypto.generateKey()
     const encryptedDek = this.crypto.encrypt(dek, kek)
-
-    const key = this.crypto.deriveKey(passphrase, salt)
 
     const id = randomUUID()
     const manifest: VaultManifest = {

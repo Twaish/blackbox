@@ -1,8 +1,8 @@
 import { AsyncIteratorClass, consumeEventIterator } from '@orpc/client'
 
-type EventFactory<T = any> = () => Promise<AsyncIteratorClass<T>>
+type EventFactory<T> = () => Promise<AsyncIteratorClass<T>>
 
-export function createEventHandler<T = any>(
+export function createEventHandler<T>(
   name: string,
   eventFactory: EventFactory<T>,
 ) {

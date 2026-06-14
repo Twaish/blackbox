@@ -1,8 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
 import EventEmitter from 'events'
 
-import { ITaskService } from '../interfaces/ITaskService'
-
 export class TaskService extends EventEmitter implements ITaskService {
   private readonly tasks: Record<string, Task> = {}
   private readonly cleanupHandlers: Map<string, () => void> = new Map()

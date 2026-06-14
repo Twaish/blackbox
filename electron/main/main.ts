@@ -56,17 +56,15 @@ app.whenReady().then(async () => {
     const vaultSessions = new VaultSessions()
     const vaultRegistry = new VaultRegistry(settingsBuilder, vaultPaths)
     const vaultFileStore = new VaultFileStore(vaultCrypto, vaultPaths)
-
     const vaultUploads = new VaultUploads(vaultCrypto, vaultPaths, taskService)
-
     const vaultManager = new VaultManager(
       vaultRegistry,
       vaultSessions,
-      vaultFileStore,
+      vaultUploads,
       vaultCrypto,
+      vaultFileStore,
       vaultPaths,
       taskService,
-      vaultUploads,
     )
 
     const mainWindow = new ElectronWindow()

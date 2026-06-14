@@ -61,7 +61,7 @@ export async function extractID3Metadata(blob: Blob) {
 
     if (!frameId.trim() || frameSize <= 0) break
 
-    let pos = offset
+    const pos = offset
 
     offset += 10 + frameSize
     if (frameId !== 'TIT2' && frameId !== 'TPE1') {

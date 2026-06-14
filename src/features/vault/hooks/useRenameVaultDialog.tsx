@@ -8,7 +8,7 @@ type VaultEditState = {
   load: (name: string) => void
 }
 
-export const useVaultEditStore = create<VaultEditState>((set, get) => ({
+export const useVaultEditStore = create<VaultEditState>((set) => ({
   name: '',
   update: (name) => set({ name }),
   load: (name) => set({ name }),

@@ -4,7 +4,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { Settings } from 'lucide-react'
-import { ComponentProps, useEffect, useRef, useState } from 'react'
+import { ComponentProps, useEffect, useState } from 'react'
 import { PreviewToggle } from './PreviewToggle'
 import { cn } from '@/utils/tailwind'
 import { ViewStyleSelector } from './ViewStyleSelector'
@@ -17,7 +17,6 @@ import {
   quitAndInstall,
 } from '@/app/instance/actions'
 import { useCheckForUpdates } from '@/app/instance/mutations'
-import { UpdateStatus } from '@shared/types/instance'
 import { create } from 'zustand'
 import { useConfirmationDialog } from '@/components/confirmation-dialog/useConfirmationDialog'
 

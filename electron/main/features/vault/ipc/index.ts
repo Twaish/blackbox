@@ -23,7 +23,7 @@ import {
 } from './schemas'
 import { createVaultUseCases } from '../usecases'
 
-function withErrorHandling<TArgs extends any[], TResult>(
+function withErrorHandling<TArgs extends unknown[], TResult>(
   fn: (...args: TArgs) => Promise<TResult> | TResult,
 ) {
   return async (...args: TArgs): Promise<TResult> => {

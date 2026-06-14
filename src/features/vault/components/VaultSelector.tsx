@@ -211,7 +211,7 @@ function VaultItem({
       onClick={onClick}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
-          onClick?.(e as any)
+          onClick?.(e as unknown as React.MouseEvent<HTMLDivElement>)
         }
       }}
       {...props}
