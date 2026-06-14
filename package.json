@@ -10,7 +10,7 @@
   "license": "GPL-3.0-only",
   "private": true,
   "scripts": {
-    "dev": "electron-vite dev -- --trace-warnings",
+    "dev": "tsx ./scripts/generate-dev-update-config.ts && electron-vite dev",
     "dev:inspect": "electron-vite dev --inspect --sourcemap",
     "start": "electron-vite dev",
     "build": "electron-vite build",

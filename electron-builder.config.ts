@@ -33,7 +33,7 @@ const config: Configuration = {
     {
       provider: 'github',
       owner: app.author,
-      repo: 'blackbox',
+      repo: app.name,
     },
   ],
 }

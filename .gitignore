@@ -107,3 +107,6 @@ release/
 # Drizzle files
 drizzle
 *.db
+
+# Generated config files
+dev-app-update.yml
