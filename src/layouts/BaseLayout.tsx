@@ -7,7 +7,7 @@ import { UploadFileButton } from '@/features/vault/components/action-buttons/Upl
 import { SettingsButton } from '@/features/vault/components/action-buttons/SettingsButton'
 import { TasksButton } from '@/app/tasks/components/TasksButton'
 import { FileSearchField } from '@/features/vault/components/blocks/FileSearchField'
-import logo from '@assets/icon.png'
+import logo from '@assets/icon32x32.png'
 
 export default function BaseLayout({ children }: { children: ReactNode }) {
   return (
@@ -35,7 +35,15 @@ function TitleBar() {
 }
 
 function AppLogo() {
-  return <img src={logo} className="max-h-6 pr-1 pl-1" />
+  return (
+    <img
+      alt="logo"
+      src={logo}
+      height={24}
+      width={24}
+      className="ml-1 max-h-6 pr-1 pl-1"
+    />
+  )
 }
 
 function AppName() {
@@ -48,8 +56,11 @@ function AppName() {
   if (!appName) return
 
   return (
-    <div className="mr-auto flex pr-1 text-xs whitespace-nowrap opacity-65 select-none">
-      {appName}
-    </div>
+    <>
+      <title>{appName}</title>
+      <div className="mr-auto flex pr-1 text-xs whitespace-nowrap opacity-65 select-none">
+        {appName}
+      </div>
+    </>
   )
 }
