@@ -1,5 +1,0 @@
-type VaultEntry = {
-  id: string
-  name: string
-  location: string
-}

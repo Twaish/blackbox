@@ -3,9 +3,9 @@ import { AddVaultDialog } from '../components/AddVaultDialog'
 import { create } from 'zustand'
 
 type VaultEditState = {
-  draft: Partial<CreateVaultDTO>
-  update: (patch: Partial<CreateVaultDTO>) => void
-  load: (media: Partial<CreateVaultDTO>) => void
+  draft: Partial<CreateVaultArgs>
+  update: (patch: Partial<CreateVaultArgs>) => void
+  load: (media: Partial<CreateVaultArgs>) => void
   reset: () => void
 }
 
@@ -21,7 +21,7 @@ export const useVaultEditStore = create<VaultEditState>((set, get) => ({
 }))
 
 interface UseAddVaultDialogOptions {
-  onAdd?: (vault: Partial<CreateVaultDTO>) => void
+  onAdd?: (vault: Partial<CreateVaultArgs>) => void
 }
 
 export const openAddVaultDialog = ({ onAdd }: UseAddVaultDialogOptions) => {

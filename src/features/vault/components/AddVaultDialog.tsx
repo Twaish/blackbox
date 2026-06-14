@@ -4,29 +4,27 @@ import {
   DialogFooter,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { useMutation } from '@tanstack/react-query'
 import { VisuallyHidden } from 'radix-ui'
 import { ComponentProps, createContext, useContext, useState } from 'react'
 import { DialogFooterHint } from '@/components/dialog/DialogFooterHint'
 import { selectFolder } from '@/app/instance/actions'
-import { createVault, addExistingVault } from '../actions'
 import { cn } from '@/utils/tailwind'
 import { UseBoundStore, StoreApi } from 'zustand'
-import { Eye, EyeClosed, EyeOff, Folder, KeyRound } from 'lucide-react'
+import { Eye, EyeOff, Folder, KeyRound } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { closeAddVaultDialog } from '../hooks/useAddVaultDialog'
 
 type Store = UseBoundStore<
   StoreApi<{
-    draft: Partial<CreateVaultDTO>
-    update(patch: Partial<CreateVaultDTO>): void
+    draft: Partial<CreateVaultArgs>
+    update(patch: Partial<CreateVaultArgs>): void
     reset: () => void
   }>
 >
 
 type AddVaultDialogContextType = {
   store: Store
-  onAdd?: (vault: Partial<CreateVaultDTO>) => void
+  onAdd?: (vault: Partial<CreateVaultArgs>) => void
 }
 
 const AddVaultDialogContext = createContext<AddVaultDialogContextType | null>(

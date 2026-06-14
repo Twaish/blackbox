@@ -1,9 +1,5 @@
 interface IVaultManager {
-  createVault(args: {
-    location: string
-    name: string
-    passphrase: string
-  }): Promise<void>
+  createVault(args: CreateVaultArgs): Promise<void>
   unlockVault(args: { vaultId: string; passphrase: string }): Promise<void>
   renameVault(args: { vaultId: string; name: string }): Promise<void>
   changePassphrase(args: {
