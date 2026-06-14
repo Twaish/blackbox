@@ -17,10 +17,10 @@ import { VaultManager } from './features/vault/infrastructure/adapters/VaultMana
 import { VaultRegistry } from './features/vault/infrastructure/adapters/VaultRegistry'
 import { VaultSessions } from './features/vault/infrastructure/adapters/VaultSessions'
 import { VaultFileStore } from './features/vault/infrastructure/adapters/VaultFileStore'
+import { VaultUploads } from './features/vault/infrastructure/adapters/VaultUploads'
 import { VaultCrypto } from './features/vault/infrastructure/adapters/VaultCrypto'
 import { VaultPaths } from './features/vault/infrastructure/adapters/VaultPaths'
 import { TaskService } from './app/tasks/application/services/TaskService'
-import { UploadManager } from './features/vault/infrastructure/adapters/UploadManager'
 import { UpdateService } from './app/instance/UpdateService'
 
 app.commandLine.appendSwitch('trace-warnings')
@@ -57,11 +57,7 @@ app.whenReady().then(async () => {
     const vaultRegistry = new VaultRegistry(settingsBuilder, vaultPaths)
     const vaultFileStore = new VaultFileStore(vaultCrypto, vaultPaths)
 
-    const uploadManager = new UploadManager(
-      vaultCrypto,
-      vaultPaths,
-      taskService,
-    )
+    const vaultUploads = new VaultUploads(vaultCrypto, vaultPaths, taskService)
 
     const vaultManager = new VaultManager(
       vaultRegistry,
@@ -70,7 +66,7 @@ app.whenReady().then(async () => {
       vaultCrypto,
       vaultPaths,
       taskService,
-      uploadManager,
+      vaultUploads,
     )
 
     const mainWindow = new ElectronWindow()
@@ -86,7 +82,7 @@ app.whenReady().then(async () => {
       VaultManager: vaultManager,
       VaultRegistry: vaultRegistry,
       VaultSessions: vaultSessions,
-      UploadManager: uploadManager,
+      VaultUploads: vaultUploads,
       UpdateService: updateService,
     }
 

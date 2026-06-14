@@ -3,15 +3,12 @@ import { open, readFile, unlink } from 'fs/promises'
 import { createDecipheriv } from 'crypto'
 import path from 'path'
 
-import { VaultCrypto } from './VaultCrypto'
-import { VaultPaths } from './VaultPaths'
-
 const ALGO = 'aes-256-gcm'
 
-export class VaultFileStore {
+export class VaultFileStore implements IVaultFileStore {
   constructor(
-    private crypto: VaultCrypto,
-    private paths: VaultPaths,
+    private crypto: IVaultCrypto,
+    private paths: IVaultPaths,
   ) {}
 
   async read(vault: VaultEntry, key: Buffer, fileId: string): Promise<Buffer> {

@@ -1,45 +1,17 @@
 import path from 'node:path'
-import { CipherGCM, randomUUID } from 'node:crypto'
+import { randomUUID } from 'node:crypto'
 import { createReadStream, createWriteStream, type WriteStream } from 'node:fs'
 import { stat, unlink, writeFile } from 'node:fs/promises'
 import mime from 'mime-types'
 
 import { ITaskService } from '@/app/tasks/application/interfaces/ITaskService'
-import { VaultCrypto } from './VaultCrypto'
-import { VaultPaths } from './VaultPaths'
 
-export type UploadSession = {
-  id: string
-  vaultId: string
-  fileId: string
-  taskId: string
-
-  name: string
-  mime: string
-  size: number
-
-  transferred: number
-
-  encryptedPath: string
-  metaPath: string
-
-  iv: Buffer
-  cipher: CipherGCM
-  output: WriteStream
-
-  key: Buffer
-
-  onEnd?: () => void
-  hasEnded: boolean
-  abortPromise: Promise<void> | null
-}
-
-export class UploadManager {
-  private uploads = new Map<string, UploadSession>()
+export class VaultUploads implements IVaultUploads {
+  private uploads = new Map<string, VaultUploadSession>()
 
   constructor(
-    private crypto: VaultCrypto,
-    private paths: VaultPaths,
+    private crypto: IVaultCrypto,
+    private paths: IVaultPaths,
     private tasks: ITaskService,
   ) {}
 
@@ -197,7 +169,7 @@ export class UploadManager {
     }
   }
 
-  private async finalizeStream(session: UploadSession): Promise<void> {
+  private async finalizeStream(session: VaultUploadSession): Promise<void> {
     await write(session.output, session.cipher.final())
     await write(session.output, session.cipher.getAuthTag())
 
@@ -208,7 +180,7 @@ export class UploadManager {
     })
   }
 
-  private async writeMetadata(session: UploadSession): Promise<void> {
+  private async writeMetadata(session: VaultUploadSession): Promise<void> {
     const metadata: VaultFileMeta = {
       fileId: session.fileId,
       original: {

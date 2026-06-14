@@ -1,7 +1,5 @@
-import { VaultRegistry } from '../infrastructure/adapters/VaultRegistry'
-
 export default class VaultExists {
-  constructor(private readonly registry: VaultRegistry) {}
+  constructor(private readonly registry: IVaultRegistry) {}
 
   async execute(vaultId: string) {
     return this.registry.vaultExists(vaultId)

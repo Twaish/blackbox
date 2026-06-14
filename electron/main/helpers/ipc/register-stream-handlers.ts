@@ -17,7 +17,7 @@ function noEvent<T extends unknown[], K>(callback: (...args: T) => K) {
 
 export function registerStreamHandlers({
   VaultManager,
-  UploadManager,
+  VaultUploads,
 }: Modules) {
   registerAbort()
   registerUpload({
@@ -26,9 +26,9 @@ export function registerStreamHandlers({
     endChannel: 'upload:finish',
     handler: {
       start: VaultManager.startUpload.bind(VaultManager),
-      chunk: UploadManager.writeChunk.bind(UploadManager),
-      finish: UploadManager.finish.bind(UploadManager),
-      abort: UploadManager.abort.bind(UploadManager),
+      chunk: VaultUploads.writeChunk.bind(VaultUploads),
+      finish: VaultUploads.finish.bind(VaultUploads),
+      abort: VaultUploads.abort.bind(VaultUploads),
     },
   })
   registerDownload({

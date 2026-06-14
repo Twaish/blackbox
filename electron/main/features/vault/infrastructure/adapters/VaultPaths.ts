@@ -1,6 +1,6 @@
 import path from 'path'
 
-export class VaultPaths {
+export class VaultPaths implements IVaultPaths {
   data(vaultPath: string, fileId?: string) {
     return fileId
       ? path.join(vaultPath, 'data', `${fileId}.enc`)

@@ -1,8 +1,7 @@
 import { existsSync } from 'fs'
-import { VaultRegistry } from '../infrastructure/adapters/VaultRegistry'
 
 export default class ChangeVaultLocation {
-  constructor(private readonly registry: VaultRegistry) {}
+  constructor(private readonly registry: IVaultRegistry) {}
 
   async execute({ vaultId, location }: { vaultId: string; location: string }) {
     if (!existsSync(location)) throw new Error(`${location} does not exist`)

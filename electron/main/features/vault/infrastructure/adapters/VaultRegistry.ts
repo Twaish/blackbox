@@ -3,7 +3,6 @@ import {
   Schema,
   SettingsInterface,
 } from '@/app/settings/application/ports/ISettingsBuilder'
-import { VaultPaths } from './VaultPaths'
 import { existsSync } from 'fs'
 import { readFile } from 'fs/promises'
 
@@ -11,12 +10,12 @@ const settingsSchema = {
   vaults: { default: [] as VaultEntry[] },
 } satisfies Schema
 
-export class VaultRegistry {
+export class VaultRegistry implements IVaultRegistry {
   private settings: SettingsInterface<typeof settingsSchema>
 
   constructor(
     builder: ISettingsBuilder,
-    private paths: VaultPaths,
+    private paths: IVaultPaths,
   ) {
     this.settings = builder.defineSettings(
       'vaults',

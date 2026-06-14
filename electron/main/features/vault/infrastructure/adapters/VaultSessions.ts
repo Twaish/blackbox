@@ -1,10 +1,4 @@
-type VaultSession = {
-  vaultId: string
-  dek: Buffer
-  unlockedAt: number
-}
-
-export class VaultSessions {
+export class VaultSessions implements IVaultSessions {
   private sessions = new Map<string, VaultSession>()
 
   has(vaultId: string): boolean {

@@ -1,25 +1,19 @@
 import { randomUUID, randomBytes } from 'node:crypto'
 import { join } from 'path'
 import { access, mkdir, writeFile } from 'node:fs/promises'
-import { VaultPaths } from './VaultPaths'
-import { VaultCrypto } from './VaultCrypto'
-import { VaultRegistry } from './VaultRegistry'
-import { VaultSessions } from './VaultSessions'
-import { VaultFileStore } from './VaultFileStore'
 import path from 'node:path'
 import { ITaskService } from '@/app/tasks/application/interfaces/ITaskService'
-import { UploadManager } from './UploadManager'
 import { existsSync } from 'node:fs'
 
 export class VaultManager implements IVaultManager {
   constructor(
-    private registry: VaultRegistry,
-    private sessions: VaultSessions,
-    private files: VaultFileStore,
-    private crypto: VaultCrypto,
-    private paths: VaultPaths,
+    private registry: IVaultRegistry,
+    private sessions: IVaultSessions,
+    private files: IVaultFileStore,
+    private crypto: IVaultCrypto,
+    private paths: IVaultPaths,
     private tasks: ITaskService,
-    private uploadManager: UploadManager,
+    private uploads: IVaultUploads,
   ) {}
 
   async addFile({
@@ -31,7 +25,7 @@ export class VaultManager implements IVaultManager {
   }): Promise<string> {
     const vault = this.registry.get(vaultId)
     const session = this.sessions.get(vaultId)
-    return await this.uploadManager.uploadFile(vault, session.dek, filepath)
+    return await this.uploads.uploadFile(vault, session.dek, filepath)
   }
 
   async readMeta({
@@ -306,7 +300,7 @@ export class VaultManager implements IVaultManager {
   }): Promise<string> {
     const vault = this.registry.get(vaultId)
     const session = this.sessions.get(vaultId)
-    return await this.uploadManager.createUpload({
+    return await this.uploads.createUpload({
       uploadId: streamId,
       vault,
       key: session.dek,

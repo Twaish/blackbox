@@ -10,7 +10,7 @@ const IV_LENGTH = 12
 const TAG_LENGTH = 16
 const KEY_LENGTH = 32
 
-export class VaultCrypto {
+export class VaultCrypto implements IVaultCrypto {
   deriveKey(passphrase: string, salt: Buffer): Buffer {
     return scryptSync(passphrase, salt, KEY_LENGTH)
   }
