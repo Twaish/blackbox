@@ -1,4 +1,3 @@
-import { Kbd } from '@/components/Kbd'
 import { useState, useRef, useEffect } from 'react'
 import { useVaultFilesStore } from '../../stores/useVaultFilesStore'
 import { SearchField } from '../ui/SearchField'
