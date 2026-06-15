@@ -37,7 +37,7 @@ function FileSearchFieldContent() {
   }, [])
 
   return (
-    <SearchField className="h-full border-l">
+    <SearchField className="h-full border-l pr-1">
       <SearchField.Icon />
       <SearchField.Input
         ref={inputRef}
@@ -49,9 +49,6 @@ function FileSearchFieldContent() {
         placeholder="Search..."
         className="no-drag h-full border-none text-xs outline-0"
       />
-      <div className="absolute right-0 mx-1 my-auto">
-        <Kbd>ctrl + f</Kbd>
-      </div>
     </SearchField>
   )
 }
