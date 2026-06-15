@@ -9,52 +9,90 @@ import {
   extractMP4CoverArt,
 } from '../../utils/audio-utils'
 
-type CachedPreview = {
+interface LRUNode {
+  key: string
   url: string
-  lastAccess: number
+  prev: LRUNode | null
+  next: LRUNode | null
 }
 
-const previewCache = new Map<string, CachedPreview>()
 const MAX_CACHE_SIZE = 200
+const lruMap = new Map<string, LRUNode>()
+let lruHead: LRUNode | null = null
+let lruTail: LRUNode | null = null
 
-function touch(fileId: string) {
-  const item = previewCache.get(fileId)
-  if (!item) return
+function lruPromote(node: LRUNode) {
+  if (node === lruHead) return
 
-  item.lastAccess = Date.now()
+  const { prev, next } = node
+
+  // detach
+  if (prev) prev.next = next
+  if (next) next.prev = prev
+  if (node === lruTail) lruTail = prev
+
+  // prepend
+  node.prev = null
+  node.next = lruHead
+  if (lruHead) lruHead.prev = node
+
+  lruHead = node
+  if (!lruTail) lruTail = node
 }
 
-function evictIfNeeded() {
-  if (previewCache.size <= MAX_CACHE_SIZE) return
+function lruGet(key: string): string | null {
+  const node = lruMap.get(key)
+  if (!node) return null
+  lruPromote(node)
+  return node.url
+}
 
-  const sorted = [...previewCache.entries()].sort(
-    (a, b) => a[1].lastAccess - b[1].lastAccess,
-  )
+function lruSet(key: string, url: string) {
+  const existing = lruMap.get(key)
+  if (existing) {
+    existing.url = url
+    lruPromote(existing)
+    return
+  }
 
-  while (previewCache.size > MAX_CACHE_SIZE) {
-    const oldest = sorted.shift()
-    if (!oldest) break
+  const node: LRUNode = { key, url, prev: null, next: lruHead }
+  if (lruHead) lruHead.prev = node
+  lruHead = node
+  if (!lruTail) lruTail = node
+  lruMap.set(key, node)
 
-    URL.revokeObjectURL(oldest[1].url)
-    previewCache.delete(oldest[0])
+  if (lruMap.size > MAX_CACHE_SIZE) {
+    const evict = lruTail!
+    if (evict.prev) evict.prev.next = null
+    else lruHead = null
+    lruTail = evict.prev
+    lruMap.delete(evict.key)
+    URL.revokeObjectURL(evict.url)
   }
 }
 
-function getCachedPreview(fileId: string) {
-  const cached = previewCache.get(fileId)
-  if (cached) {
-    touch(fileId)
-    return cached.url
-  }
+type PreviewType = 'image' | 'video' | 'audio'
+
+function getPreviewType(mime: string): PreviewType | null {
+  if (mime.startsWith('image/')) return 'image'
+  if (mime.startsWith('video/')) return 'video'
+  if (mime.startsWith('audio/')) return 'audio'
   return null
 }
 
-function setCachedPreview(fileId: string, url: string) {
-  previewCache.set(fileId, {
-    url,
-    lastAccess: Date.now(),
-  })
-  evictIfNeeded()
+async function buildPreview(
+  blob: Blob,
+  type: PreviewType,
+  mime: string,
+): Promise<Blob | null> {
+  switch (type) {
+    case 'image':
+      return createImagePreview(blob)
+    case 'video':
+      return createVideoPreview(blob)
+    case 'audio':
+      return createAudioPreview(blob, mime)
+  }
 }
 
 export const FilePreview = memo(function FilePreview({
@@ -71,29 +109,24 @@ export const FilePreview = memo(function FilePreview({
   const shouldPreviewSetting = useSettingsStore((s) => s.shouldPreview)
   const shouldPreview = forcePreview || shouldPreviewSetting
   const mime = meta.original.mime
-  const isImage = mime.startsWith('image/')
-  const isVideo = mime.startsWith('video/')
-  const isAudio = mime.startsWith('audio/')
-  const isPreviewable = isImage || isVideo || isAudio
-
+  const previewType = getPreviewType(mime)
+  const isPreviewable = previewType !== null
   const fileId = meta.fileId
 
   const [url, setUrl] = useState<string | null>(() =>
-    shouldPreview ? getCachedPreview(fileId) : null,
+    shouldPreview ? lruGet(fileId) : null,
   )
 
   useEffect(() => {
     if (!isPreviewable || !shouldPreview) return
 
-    const cached = getCachedPreview(fileId)
-
+    const cached = lruGet(fileId)
     if (cached) {
       setUrl(cached)
       return
     }
 
     const controller = new AbortController()
-
     let cancelled = false
 
     streamVaultFile({
@@ -104,17 +137,12 @@ export const FilePreview = memo(function FilePreview({
       async onDone(blob) {
         if (cancelled) return
 
-        const previewBlob = isVideo
-          ? await createVideoPreview(blob)
-          : isAudio
-            ? await createAudioPreview(blob, mime)
-            : await createImagePreview(blob)
-
+        const previewBlob = await buildPreview(blob, previewType, mime)
         if (!previewBlob || cancelled) return
 
         const objectUrl = URL.createObjectURL(previewBlob)
 
-        setCachedPreview(fileId, objectUrl)
+        lruSet(fileId, objectUrl)
         setUrl(objectUrl)
       },
     })
