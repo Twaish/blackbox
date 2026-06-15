@@ -1,4 +1,4 @@
-export interface AppInfo {
+interface AppInfo {
   name: string
   version: string
 }
