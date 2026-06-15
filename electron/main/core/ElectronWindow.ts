@@ -8,7 +8,7 @@ const iconPath = path.join(
   '../../assets/icon.png',
 )
 
-export class ElectronWindow extends EventEmitter {
+export class ElectronWindow extends EventEmitter implements IElectronWindow {
   private mainWindow: BrowserWindow
   constructor() {
     super()
