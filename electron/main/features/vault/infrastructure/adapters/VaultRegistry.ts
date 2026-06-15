@@ -1,8 +1,3 @@
-import {
-  ISettingsBuilder,
-  Schema,
-  SettingsInterface,
-} from '@/app/settings/application/ports/ISettingsBuilder'
 import { existsSync } from 'fs'
 import { readFile } from 'fs/promises'
 
