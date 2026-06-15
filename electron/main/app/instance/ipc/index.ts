@@ -2,7 +2,6 @@ import { app, dialog, shell } from 'electron'
 import path from 'path'
 import fs from 'fs'
 import { eventIterator, os } from '@orpc/server'
-import { Modules } from '@/helpers/ipc/types'
 import {
   nameOutputSchema,
   openFolderInputSchema,

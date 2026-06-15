@@ -1,13 +1,6 @@
-import { BrowserWindow } from 'electron'
-
-import { AppInfo } from '@/core/types'
-import { ElectronWindow } from '@/core/ElectronWindow'
-
-import { UpdateService } from '@/app/instance/UpdateService'
-
-declare interface Modules {
-  ElectronWindow: ElectronWindow
-  window: BrowserWindow
+interface Modules {
+  ElectronWindow: IElectronWindow
+  window: BrowserWindowType
   appInfo: AppInfo
 
   SettingsBuilder: ISettingsBuilder
@@ -15,10 +8,10 @@ declare interface Modules {
 
   TaskService: ITaskService
 
+  UpdateService: IUpdateService
+
   VaultRegistry: IVaultRegistry
   VaultSessions: IVaultSessions
   VaultUploads: IVaultUploads
   VaultManager: IVaultManager
-
-  UpdateService: UpdateService
 }

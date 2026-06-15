@@ -1,4 +1,3 @@
-import { Modules } from '@/helpers/ipc/types'
 import GetVaults from './getVaults'
 import UnlinkVault from './unlinkVault'
 import AddExistingVault from './addExistingVault'

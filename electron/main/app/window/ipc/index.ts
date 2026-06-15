@@ -1,4 +1,3 @@
-import { Modules } from '@/helpers/ipc/types'
 import { os } from '@orpc/server'
 
 export function createWindowRouters({ ElectronWindow, window }: Modules) {

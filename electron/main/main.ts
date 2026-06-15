@@ -1,11 +1,9 @@
 import { app, BrowserWindow } from 'electron'
 
 import config from './core/config'
-import { AppInfo } from './core/types'
 import { JsonStore } from './core/JsonStore'
 import { ElectronWindow } from './core/ElectronWindow'
 
-import { Modules } from './helpers/ipc/types'
 import { createOrpcRouter } from './helpers/ipc/create-orpc-router'
 import { registerOrpcHandler } from './helpers/ipc/register-orpc-handler'
 import { registerStreamHandlers } from './helpers/ipc/register-stream-handlers'
@@ -13,6 +11,11 @@ import { createCryptoServices } from './helpers/create-crypto-services'
 
 import { SettingsBuilder } from './app/settings/infrastructure/adapters/SettingsBuilder'
 import { SettingsRegistry } from './app/settings/infrastructure/adapters/SettingsRegistry'
+
+import { TaskService } from './app/tasks/application/services/TaskService'
+
+import { UpdateService } from './app/instance/application/services/UpdateService'
+
 import { VaultManager } from './features/vault/infrastructure/adapters/VaultManager'
 import { VaultRegistry } from './features/vault/infrastructure/adapters/VaultRegistry'
 import { VaultSessions } from './features/vault/infrastructure/adapters/VaultSessions'
@@ -20,8 +23,6 @@ import { VaultFileStore } from './features/vault/infrastructure/adapters/VaultFi
 import { VaultUploads } from './features/vault/infrastructure/adapters/VaultUploads'
 import { VaultCrypto } from './features/vault/infrastructure/adapters/VaultCrypto'
 import { VaultPaths } from './features/vault/infrastructure/adapters/VaultPaths'
-import { TaskService } from './app/tasks/application/services/TaskService'
-import { UpdateService } from './app/instance/UpdateService'
 
 app.commandLine.appendSwitch('trace-warnings')
 app.whenReady().then(async () => {

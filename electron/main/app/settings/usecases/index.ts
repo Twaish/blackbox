@@ -1,4 +1,3 @@
-import { Modules } from '@/helpers/ipc/types'
 import GetSettingsSchema from './getSettingsSchema'
 import GetSettingValue from './getSettingValue'
 import SetSettingValue from './setSettingValue'

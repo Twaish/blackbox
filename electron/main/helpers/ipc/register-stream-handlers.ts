@@ -1,5 +1,4 @@
 import { ipcMain } from 'electron'
-import { Modules } from './types'
 
 const abortHandlers = new Map<string, (streamId: string) => void>()
 function cleanHandlers(streamId: string) {

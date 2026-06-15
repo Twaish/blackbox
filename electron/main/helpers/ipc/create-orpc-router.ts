@@ -1,5 +1,3 @@
-import { Modules } from './types'
-
 import { createWindowRouters } from '../../app/window/ipc'
 import { createInstanceRouters } from '../../app/instance/ipc'
 import { createSettingsRouters } from '../../app/settings/ipc'
