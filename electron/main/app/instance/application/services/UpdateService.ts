@@ -2,7 +2,7 @@ import { autoUpdater } from 'electron-updater'
 import { EventEmitter } from 'events'
 import { is } from '@electron-toolkit/utils'
 
-export class UpdateService extends EventEmitter {
+export class UpdateService extends EventEmitter implements IUpdateService {
   private status: UpdateStatus = { state: 'idle' }
 
   constructor() {
