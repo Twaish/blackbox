@@ -1,26 +1,30 @@
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from '@/components/ui/select'
-import { useSettingsStore, VIEW_STYLES } from '../../stores/useSettingsStore'
+import { useSettingsStore } from '../../stores/useSettingsStore'
+import { Button } from '@/components/ui/button'
+import { LayoutGrid, List } from 'lucide-react'
+import { cn } from '@/utils/tailwind'
 
 export function ViewStyleSelector() {
   const viewStyle = useSettingsStore((s) => s.viewStyle)
   const setViewStyle = useSettingsStore((s) => s.setViewStyle)
   return (
-    <Select value={viewStyle} onValueChange={setViewStyle}>
-      <SelectTrigger className="h-min max-h-min rounded-none border-0 p-0 font-mono text-xs">
-        {viewStyle}
-      </SelectTrigger>
-      <SelectContent>
-        {VIEW_STYLES.map((viewStyle) => (
-          <SelectItem key={viewStyle} value={viewStyle}>
-            {viewStyle}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <div className="flex border">
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setViewStyle('grid')}
+        className={cn('rounded-none', viewStyle === 'grid' && 'bg-muted')}
+      >
+        <LayoutGrid className="h-4 w-4" />
+      </Button>
+
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setViewStyle('list')}
+        className={cn('rounded-none', viewStyle === 'list' && 'bg-muted')}
+      >
+        <List className="h-4 w-4" />
+      </Button>
+    </div>
   )
 }
