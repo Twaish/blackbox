@@ -3,6 +3,7 @@ import { useVaultFilesStore } from '../../stores/useVaultFilesStore'
 import { SearchField } from '../ui/SearchField'
 import { useVaultStore } from '../../stores/useVaultStore'
 import { useHasVaultSession } from '../../hooks/useHasVaultSession'
+import { cn } from '@/utils/tailwind'
 
 export function FileSearchField() {
   const vaultId = useVaultStore((s) => s.selectedVaultId)
@@ -18,6 +19,8 @@ function FileSearchFieldContent() {
   const setQuery = useVaultFilesStore((s) => s.setSearchQuery)
 
   const [localQuery, setLocalQuery] = useState(query)
+  const [expanded, setExpanded] = useState(false)
+
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -28,26 +31,59 @@ function FileSearchFieldContent() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.key === 'f') {
         e.preventDefault()
-        inputRef.current?.focus()
+        setExpanded(true)
+
+        requestAnimationFrame(() => {
+          inputRef.current?.focus()
+        })
       }
     }
+
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
   return (
-    <SearchField className="h-full border-l pr-1">
-      <SearchField.Icon />
-      <SearchField.Input
-        ref={inputRef}
-        value={localQuery}
-        onChange={(e) => setLocalQuery(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') setQuery(localQuery)
-        }}
-        placeholder="Search..."
-        className="no-drag h-full border-none text-xs outline-0"
-      />
+    <SearchField
+      className={cn(
+        `no-drag h-full px-1 transition-all duration-200`,
+        expanded
+          ? 'w-48'
+          : 'hover:bg-secondary/50 w-6 cursor-pointer justify-center',
+      )}
+      onClick={() => {
+        setExpanded(true)
+
+        requestAnimationFrame(() => {
+          inputRef.current?.focus()
+        })
+      }}
+    >
+      <SearchField.Icon className="min-h-3.5 min-w-3.5" />
+      {expanded && (
+        <SearchField.Input
+          ref={inputRef}
+          value={localQuery}
+          onChange={(e) => setLocalQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') setQuery(localQuery)
+            if (e.key === 'Escape') {
+              if (!localQuery) {
+                setExpanded(false)
+              } else {
+                inputRef.current?.blur()
+              }
+            }
+          }}
+          onBlur={() => {
+            if (!localQuery) {
+              setExpanded(false)
+            }
+          }}
+          placeholder="Search..."
+          className="no-drag h-full border-none text-xs outline-0"
+        />
+      )}
     </SearchField>
   )
 }
