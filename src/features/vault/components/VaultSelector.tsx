@@ -11,7 +11,6 @@ import {
   Hash,
   Lock,
   LockOpen,
-  LogOut,
   MoreHorizontal,
   Unlink,
 } from 'lucide-react'
@@ -42,6 +41,7 @@ import { restoreAllVaultFiles } from '../actions'
 import { useChangePassphraseDialog } from '../hooks/useChangePassphraseDialog'
 import { SearchField } from './ui/SearchField'
 import { useHasVaultSession } from '../hooks/useHasVaultSession'
+import { ToolbarButton } from './ui/ToolbarButton'
 
 type VaultSelectorStore = {
   query: string
@@ -300,16 +300,15 @@ VaultItem.Options = function Options({ vault }: { vault: VaultEntry }) {
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger
-        asChild
-        className="hover:bg-secondary/50 h-5 w-5 rounded p-1 select-none"
-        onClick={noProp()}
-      >
-        <MoreHorizontal className="h-3.5 w-3.5" />
+      <DropdownMenuTrigger asChild onClick={noProp()}>
+        <MoreHorizontal
+          tabIndex={0}
+          className="hover:bg-secondary/50 h-5 w-5 rounded p-1 select-none"
+        />
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="flex w-full min-w-20 flex-col"
+        className="flex w-full min-w-20 flex-col p-0"
       >
         <OptionButton onClick={noProp(handleRenameVault)}>
           <OptionButton.Icon>
@@ -335,18 +334,6 @@ VaultItem.Options = function Options({ vault }: { vault: VaultEntry }) {
           </OptionButton.Details>
         </OptionButton>
 
-        <OptionButton onClick={noProp(handleOpenFolder)}>
-          <OptionButton.Icon>
-            <FolderOpen className="h-4 w-4" />
-          </OptionButton.Icon>
-          <OptionButton.Details>
-            <OptionButton.Title>Open folder</OptionButton.Title>
-            <OptionButton.Description>
-              Open the vault location in file explorer
-            </OptionButton.Description>
-          </OptionButton.Details>
-        </OptionButton>
-
         {hasSession && (
           <OptionButton onClick={noProp(handleExportFiles)}>
             <OptionButton.Icon>
@@ -360,30 +347,34 @@ VaultItem.Options = function Options({ vault }: { vault: VaultEntry }) {
             </OptionButton.Details>
           </OptionButton>
         )}
-        {hasSession && (
-          <OptionButton onClick={noProp(handleRemoveSession)}>
-            <OptionButton.Icon>
-              <LogOut className="h-4 w-4" />
-            </OptionButton.Icon>
-            <OptionButton.Details>
-              <OptionButton.Title>Remove session</OptionButton.Title>
-              <OptionButton.Description>
-                Removes the current session for this vault
-              </OptionButton.Description>
-            </OptionButton.Details>
-          </OptionButton>
-        )}
-        <OptionButton onClick={noProp(confirmUnlink)}>
-          <OptionButton.Icon>
-            <Unlink className="h-4 w-4" />
-          </OptionButton.Icon>
-          <OptionButton.Details>
-            <OptionButton.Title>Unlink vault</OptionButton.Title>
-            <OptionButton.Description>
-              Unregisters the vault from the app
-            </OptionButton.Description>
-          </OptionButton.Details>
-        </OptionButton>
+        <div className="flex h-8 border-t">
+          <ToolbarButton
+            className="w-full px-2"
+            title="Open folder"
+            onClick={noProp(handleOpenFolder)}
+          >
+            <FolderOpen className="h-3 w-3" />
+            open
+          </ToolbarButton>
+          {hasSession && (
+            <ToolbarButton
+              className="w-full px-2"
+              title="Lock vault"
+              onClick={noProp(handleRemoveSession)}
+            >
+              <Lock className="h-3 w-3" />
+              lock
+            </ToolbarButton>
+          )}
+          <ToolbarButton
+            className="w-full px-2"
+            title="Unlink vault"
+            onClick={noProp(confirmUnlink)}
+          >
+            <Unlink className="h-3 w-3" />
+            unlink
+          </ToolbarButton>
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   )
