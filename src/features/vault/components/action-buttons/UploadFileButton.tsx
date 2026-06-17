@@ -1,5 +1,5 @@
 import { Upload } from 'lucide-react'
-import { selectFile } from '@/app/instance/actions'
+import { selectFiles } from '@/app/instance/actions'
 import { useUploadVaultFile } from '../../mutations'
 import { useVaultStore } from '../../stores/useVaultStore'
 import { ToolbarButton } from '../ui/ToolbarButton'
@@ -18,8 +18,13 @@ function UploadFileButtonContent({ vaultId }: { vaultId: string }) {
   const { mutate } = useUploadVaultFile(vaultId)
 
   const handleUpload = async () => {
-    const filepath = await selectFile()
-    if (filepath) mutate(filepath)
+    const filepaths = await selectFiles()
+
+    if (!filepaths || !filepaths.length) return
+
+    for (const filepath of filepaths) {
+      mutate(filepath)
+    }
   }
 
   return (

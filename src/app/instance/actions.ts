@@ -29,6 +29,10 @@ export async function selectFile(): Promise<string | null> {
   return await ipc.client.instance.selectFile()
 }
 
+export async function selectFiles(): Promise<string[] | null> {
+  return await ipc.client.instance.selectFiles()
+}
+
 export async function checkForUpdates(): Promise<UpdateStatus> {
   return (await ipc.client.instance.checkForUpdates()) as UpdateStatus
 }

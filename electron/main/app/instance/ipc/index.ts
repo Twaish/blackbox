@@ -7,6 +7,7 @@ import {
   openFolderInputSchema,
   saveFileInputSchema,
   selectFileOutputSchema,
+  selectFilesOutputSchema,
   selectFolderOutputSchema,
   updateStatusSchema,
   versionOutputSchema,
@@ -65,6 +66,20 @@ export function createInstanceRouters({ appInfo, UpdateService }: Modules) {
       }
 
       return result.filePaths[0]
+    }),
+    selectFiles: os.output(selectFilesOutputSchema).handler(async () => {
+      const downloads = app.getPath('downloads')
+
+      const result = await dialog.showOpenDialog({
+        defaultPath: downloads,
+        properties: ['openFile', 'multiSelections'],
+      })
+
+      if (result.canceled || result.filePaths.length === 0) {
+        return null
+      }
+
+      return result.filePaths
     }),
     checkForUpdates: os.output(updateStatusSchema).handler(async () => {
       await UpdateService.checkForUpdates()
