@@ -158,7 +158,7 @@ function UpdateButton() {
       case 'not-available':
         return 'Up to date'
       case 'available':
-        return `Download Update ${status.info.version}`
+        return `Download v${status.info.version}`
       case 'downloading':
         return `Downloading`
       case 'downloaded':
