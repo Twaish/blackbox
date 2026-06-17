@@ -81,7 +81,7 @@ function WindowButton({
   return (
     <Button
       variant={'ghost'}
-      className={cn('h-full rounded-none px-2.5 py-1.5', className)}
+      className={cn('h-full px-2.5 py-1.5', className)}
       {...rest}
     >
       {children}

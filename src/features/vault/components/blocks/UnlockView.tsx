@@ -69,14 +69,14 @@ UnlockView.PassField = function PassField({
   const [show, setShow] = useState(false)
 
   return (
-    <div className="flex h-8 w-full items-center rounded-md border text-sm">
+    <div className="flex h-8 w-full items-center border text-sm">
       <div className="flex items-center justify-center px-2">
         <KeyRound className="text-muted-foreground h-3 w-3" />
       </div>
       <input
         name="passphrase"
         type={show ? 'text' : 'password'}
-        placeholder="e.g. securepass123"
+        placeholder="Enter passphrase"
         className={cn(
           'h-full w-full font-mono text-xs outline-none',
           className,
