@@ -1,11 +1,15 @@
 import { closeModal, openModal } from '@/components/modal/useModalStore'
-import { AddVaultDialog } from '../components/AddVaultDialog'
+import { AddVaultDialog } from '../components/dialogs/AddVaultDialog'
 import { create } from 'zustand'
 
+export type AddVaultDraft = Partial<CreateVaultArgs> & {
+  confirmPassphrase?: string
+}
+
 type VaultEditState = {
-  draft: Partial<CreateVaultArgs>
-  update: (patch: Partial<CreateVaultArgs>) => void
-  load: (media: Partial<CreateVaultArgs>) => void
+  draft: Partial<AddVaultDraft>
+  update: (patch: Partial<AddVaultDraft>) => void
+  load: (args: Partial<AddVaultDraft>) => void
   reset: () => void
 }
 
@@ -21,7 +25,7 @@ export const useVaultEditStore = create<VaultEditState>((set) => ({
 }))
 
 interface UseAddVaultDialogOptions {
-  onAdd?: (vault: Partial<CreateVaultArgs>) => void
+  onAdd?: (vault: Partial<AddVaultDraft>) => void
 }
 
 export const openAddVaultDialog = ({ onAdd }: UseAddVaultDialogOptions) => {

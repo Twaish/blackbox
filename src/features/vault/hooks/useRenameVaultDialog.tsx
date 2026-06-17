@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { RenameVaultDialog } from '../components/RenameVaultDialog'
+import { RenameVaultDialog } from '../components/dialogs/RenameVaultDialog'
 import { openModal, closeModal } from '@/components/modal/useModalStore'
 
 type VaultEditState = {

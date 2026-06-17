@@ -12,19 +12,22 @@ import { cn } from '@/utils/tailwind'
 import { UseBoundStore, StoreApi } from 'zustand'
 import { Eye, EyeOff, Folder, KeyRound } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { closeAddVaultDialog } from '../hooks/useAddVaultDialog'
+import {
+  AddVaultDraft,
+  closeAddVaultDialog,
+} from '../../hooks/useAddVaultDialog'
 
 type Store = UseBoundStore<
   StoreApi<{
-    draft: Partial<CreateVaultArgs>
-    update(patch: Partial<CreateVaultArgs>): void
+    draft: Partial<AddVaultDraft>
+    update(patch: Partial<AddVaultDraft>): void
     reset: () => void
   }>
 >
 
 type AddVaultDialogContextType = {
   store: Store
-  onAdd?: (vault: Partial<CreateVaultArgs>) => void
+  onAdd?: (vault: Partial<AddVaultDraft>) => void
 }
 
 const AddVaultDialogContext = createContext<AddVaultDialogContextType | null>(
@@ -44,7 +47,7 @@ export function AddVaultDialog({ store, onAdd }: AddVaultDialogContextType) {
     <AddVaultDialogContext.Provider value={{ store, onAdd }}>
       <DialogContent
         showCloseButton={false}
-        className="flex max-h-[70vh] flex-col gap-0 overflow-hidden p-0"
+        className="flex max-h-[70vh] max-w-md! flex-col gap-0 overflow-hidden p-0"
       >
         <VisuallyHidden.Root>
           <DialogTitle>Create vault</DialogTitle>
@@ -63,10 +66,17 @@ export function AddVaultDialog({ store, onAdd }: AddVaultDialogContextType) {
             <AddVaultDialog.NameInput />
           </div>
 
-          <div className="flex flex-col gap-0.5">
-            <FieldTitle>Passphrase</FieldTitle>
-            <AddVaultDialog.PassInput />
+          <div className="flex gap-1">
+            <div className="flex flex-col gap-0.5">
+              <FieldTitle>Passphrase</FieldTitle>
+              <AddVaultDialog.PassInput />
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <FieldTitle>Confirm</FieldTitle>
+              <AddVaultDialog.ConfirmPassInput />
+            </div>
           </div>
+          <ErrorIndicator />
         </div>
         <AddVaultDialog.Footer />
       </DialogContent>
@@ -91,7 +101,7 @@ AddVaultDialog.LocationInput = function LocationInput() {
   }
 
   return (
-    <div className="flex h-8 items-center rounded-md border">
+    <div className="flex h-8 items-center border">
       <input
         value={location ?? ''}
         onChange={(e) => handleChange(e.target.value)}
@@ -121,7 +131,7 @@ AddVaultDialog.NameInput = function NameInput() {
 
   return (
     <>
-      <div className="flex h-8 items-center rounded-md border">
+      <div className="flex h-8 items-center border">
         <input
           value={name ?? ''}
           onChange={(e) => handleChange(e.target.value)}
@@ -150,7 +160,7 @@ AddVaultDialog.PassInput = function PassInput() {
   }
 
   return (
-    <div className="flex h-8 w-full items-center rounded-md border text-sm">
+    <div className="flex h-8 w-full items-center border text-sm">
       <div className="flex items-center justify-center px-2">
         <KeyRound className="text-muted-foreground h-3 w-3" />
       </div>
@@ -158,7 +168,38 @@ AddVaultDialog.PassInput = function PassInput() {
         type={show ? 'text' : 'password'}
         value={passphrase ?? ''}
         onChange={(e) => handleChange(e.target.value)}
-        placeholder="e.g. securepass123"
+        placeholder="Enter passphrase"
+        className="h-full w-full font-mono text-xs outline-none"
+      />
+      <div
+        onClick={() => setShow(!show)}
+        className="flex aspect-square h-full cursor-pointer items-center justify-center px-2 select-none"
+      >
+        {show ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+      </div>
+    </div>
+  )
+}
+AddVaultDialog.ConfirmPassInput = function ConfirmPassInput() {
+  const { store } = useAddVaultDialog()
+  const confirmPassphrase = store((s) => s.draft.confirmPassphrase)
+  const update = store((s) => s.update)
+  const [show, setShow] = useState(false)
+
+  const handleChange = (confirmPassphrase: string) => {
+    update({ confirmPassphrase })
+  }
+
+  return (
+    <div className="flex h-8 w-full items-center border text-sm">
+      <div className="flex items-center justify-center px-2">
+        <KeyRound className="text-muted-foreground h-3 w-3" />
+      </div>
+      <input
+        type={show ? 'text' : 'password'}
+        value={confirmPassphrase ?? ''}
+        onChange={(e) => handleChange(e.target.value)}
+        placeholder="Confirm passphrase"
         className="h-full w-full font-mono text-xs outline-none"
       />
       <div
@@ -174,9 +215,27 @@ AddVaultDialog.PassInput = function PassInput() {
 AddVaultDialog.Footer = function Footer() {
   const { store, onAdd } = useAddVaultDialog()
 
+  const hasRequiredFields = store(
+    (s) =>
+      !!s.draft.location?.trim() &&
+      !!s.draft.name?.trim() &&
+      !!s.draft.passphrase?.trim() &&
+      !!s.draft.confirmPassphrase?.trim(),
+  )
+
+  const isSamePassword = store(isSamePasswordSelector)
+
   const add = () => {
     try {
-      onAdd?.(store.getState().draft)
+      const draft = store.getState().draft
+
+      if (!draft.location?.trim()) return
+      if (!draft.name?.trim()) return
+      if (!draft.passphrase?.trim()) return
+      if (!draft.confirmPassphrase?.trim()) return
+      if (draft.passphrase !== draft.confirmPassphrase) return
+
+      onAdd?.(draft)
       closeAddVaultDialog()
     } catch (err) {
       console.log(`Something went wrong creating vault`, err)
@@ -186,9 +245,26 @@ AddVaultDialog.Footer = function Footer() {
   return (
     <DialogFooter>
       <DialogFooterHint text="close">Esc</DialogFooterHint>
-      <div className="flex-1"></div>
-      <Button onClick={add}>Create vault</Button>
+      <div className="flex-1" />
+      <Button onClick={add} disabled={!hasRequiredFields || !isSamePassword}>
+        Create vault
+      </Button>
     </DialogFooter>
+  )
+}
+
+function ErrorIndicator() {
+  const { store } = useAddVaultDialog()
+
+  const isPassDefined = store((s) => !!s.draft.passphrase)
+  const isSamePassword = store(isSamePasswordSelector)
+
+  if (!isPassDefined || isSamePassword) return null
+
+  return (
+    <span className="text-destructive-foreground text-xs">
+      Passwords do not match
+    </span>
   )
 }
 
@@ -203,5 +279,12 @@ function FieldTitle({ className, children, ...props }: ComponentProps<'div'>) {
     >
       {children}
     </span>
+  )
+}
+
+function isSamePasswordSelector(s: { draft: Partial<AddVaultDraft> }) {
+  return (
+    s.draft.passphrase?.trim() &&
+    s.draft.passphrase === s.draft.confirmPassphrase
   )
 }

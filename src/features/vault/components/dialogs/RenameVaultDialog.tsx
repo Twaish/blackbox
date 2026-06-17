@@ -10,7 +10,7 @@ import {
 import { DialogFooterHint } from '@/components/dialog/DialogFooterHint'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/utils/tailwind'
-import { closeRenameVaultDialog } from '../hooks/useRenameVaultDialog'
+import { closeRenameVaultDialog } from '../../hooks/useRenameVaultDialog'
 
 type Store = UseBoundStore<
   StoreApi<{
@@ -45,7 +45,7 @@ export function RenameVaultDialog({
     <RenameVaultDialogContext.Provider value={{ store, onRename }}>
       <DialogContent
         showCloseButton={false}
-        className="flex max-h-[70vh] flex-col gap-0 overflow-hidden p-0"
+        className="flex max-h-[70vh] max-w-sm! flex-col gap-0 overflow-hidden p-0"
       >
         <VisuallyHidden.Root>
           <DialogTitle>Create vault</DialogTitle>
@@ -75,16 +75,12 @@ RenameVaultDialog.NameInput = function NameInput() {
   }
 
   return (
-    <>
-      <div className="flex h-8 items-center rounded-md border">
-        <input
-          value={name}
-          onChange={(e) => handleChange(e.target.value)}
-          placeholder="Personal"
-          className="w-full px-2 text-sm outline-none"
-        />
-      </div>
-    </>
+    <input
+      value={name}
+      onChange={(e) => handleChange(e.target.value)}
+      placeholder="Personal"
+      className="h-8 w-full border px-2 text-sm outline-none"
+    />
   )
 }
 

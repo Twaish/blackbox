@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button'
 import {
   closeChangePassphraseDialog,
   PassphraseChange,
-} from '../hooks/useChangePassphraseDialog'
+} from '../../hooks/useChangePassphraseDialog'
 
 type State = {
   draft: PassphraseChange
@@ -48,7 +48,7 @@ export function ChangePassphraseDialog({
     <ChangePassphraseDialogContext.Provider value={{ store, onSubmit }}>
       <DialogContent
         showCloseButton={false}
-        className="flex max-h-[70vh] flex-col gap-0 overflow-hidden p-0"
+        className="flex max-h-[70vh] max-w-md! flex-col gap-0 overflow-hidden p-0"
       >
         <VisuallyHidden.Root>
           <DialogTitle>Change vault passphrase</DialogTitle>
@@ -59,18 +59,30 @@ export function ChangePassphraseDialog({
         <div className="flex flex-col gap-2 p-2">
           <div className="flex flex-col gap-0.5">
             <FieldTitle>Old Passphrase</FieldTitle>
-            <PassphraseField field="oldPassphrase" />
+            <PassphraseField
+              placeholder="Current passphrase"
+              field="oldPassphrase"
+            />
           </div>
 
-          <div className="flex flex-col gap-0.5">
-            <FieldTitle>New Passphrase</FieldTitle>
-            <PassphraseField field="newPassphrase" />
-          </div>
+          <div className="flex gap-1">
+            <div className="flex w-full flex-col gap-0.5">
+              <FieldTitle>New Passphrase</FieldTitle>
+              <PassphraseField
+                placeholder="New passphrase"
+                field="newPassphrase"
+              />
+            </div>
 
-          <div className="flex flex-col gap-0.5">
-            <FieldTitle>Confirm Passphrase</FieldTitle>
-            <ConfirmPassphraseField field="confirmNewPassphrase" />
+            <div className="flex w-full flex-col gap-0.5">
+              <FieldTitle>Confirm</FieldTitle>
+              <ConfirmPassphraseField
+                placeholder="Confirm passphrase"
+                field="confirmNewPassphrase"
+              />
+            </div>
           </div>
+          <ErrorIndicator />
         </div>
         <ChangePassphraseDialog.Footer />
       </DialogContent>
@@ -78,25 +90,31 @@ export function ChangePassphraseDialog({
   )
 }
 
-function ConfirmPassphraseField({
-  ...props
-}: ComponentProps<typeof PassphraseField>) {
+function ErrorIndicator() {
   const { store } = useChangePassphraseDialog()
   const isNewPassDefined = store((s) => !!s.draft.newPassphrase)
   const isSamePassword = store(isSamePasswordSelector)
+
+  if (!isNewPassDefined || isSamePassword) return null
+
   return (
-    <>
-      <PassphraseField {...props} />
-      {isNewPassDefined && !isSamePassword && (
-        <span className="text-destructive-foreground text-xs">
-          Passwords do not match
-        </span>
-      )}
-    </>
+    <span className="text-destructive-foreground text-xs">
+      Passwords do not match
+    </span>
   )
 }
 
-function PassphraseField({ field }: { field: keyof PassphraseChange }) {
+function ConfirmPassphraseField({
+  ...props
+}: ComponentProps<typeof PassphraseField>) {
+  return <PassphraseField {...props} />
+}
+
+function PassphraseField({
+  field,
+  className,
+  ...props
+}: { field: keyof PassphraseChange } & ComponentProps<'input'>) {
   const { store } = useChangePassphraseDialog()
 
   const value = store((s) => s.draft[field])
@@ -105,7 +123,7 @@ function PassphraseField({ field }: { field: keyof PassphraseChange }) {
   const [show, setShow] = useState(false)
 
   return (
-    <div className="flex h-8 w-full items-center rounded-md border text-sm">
+    <div className="flex h-8 w-full items-center border text-sm">
       <div className="flex items-center justify-center px-2">
         <KeyRound className="text-muted-foreground h-3 w-3" />
       </div>
@@ -114,8 +132,11 @@ function PassphraseField({ field }: { field: keyof PassphraseChange }) {
         type={show ? 'text' : 'password'}
         value={value}
         onChange={(e) => update({ [field]: e.target.value })}
-        placeholder="e.g. securepass123"
-        className="h-full w-full font-mono text-xs outline-none"
+        className={cn(
+          'h-full w-full font-mono text-xs outline-none',
+          className,
+        )}
+        {...props}
       />
 
       <button

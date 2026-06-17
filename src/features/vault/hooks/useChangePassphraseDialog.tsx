@@ -1,6 +1,6 @@
 import { closeModal, openModal } from '@/components/modal/useModalStore'
 import { create } from 'zustand'
-import { ChangePassphraseDialog } from '../components/ChangePassphraseDialog'
+import { ChangePassphraseDialog } from '../components/dialogs/ChangePassphraseDialog'
 
 export type PassphraseChange = {
   oldPassphrase: string
