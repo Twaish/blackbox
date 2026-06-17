@@ -10,8 +10,6 @@ export const selectFolderOutputSchema = z.string().nullable()
 
 export const saveFileInputSchema = z.string()
 
-export const selectFileOutputSchema = z.string().nullable()
-
 export const selectFilesOutputSchema = z.array(z.string()).nullable()
 
 const UpdateInfoSchema = z.unknown()

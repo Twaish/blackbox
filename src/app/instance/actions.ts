@@ -25,10 +25,6 @@ export async function saveFile(filename: string): Promise<string | null> {
   return await ipc.client.instance.saveFile(filename)
 }
 
-export async function selectFile(): Promise<string | null> {
-  return await ipc.client.instance.selectFile()
-}
-
 export async function selectFiles(): Promise<string[] | null> {
   return await ipc.client.instance.selectFiles()
 }
