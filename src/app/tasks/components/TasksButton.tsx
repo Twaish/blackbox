@@ -1,5 +1,5 @@
 import { useState, useEffect, ComponentProps } from 'react'
-import { Inbox, X } from 'lucide-react'
+import { ListChecks, X } from 'lucide-react'
 import {
   Popover,
   PopoverContent,
@@ -73,7 +73,7 @@ export function TasksButton(props: ComponentProps<typeof PopoverTrigger>) {
             open && 'bg-secondary/50',
           )}
         >
-          <Inbox
+          <ListChecks
             className={cn(
               'text-muted-foreground h-3.5 w-3.5',
               open && 'text-secondary-foreground',
