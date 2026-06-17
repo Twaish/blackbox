@@ -43,7 +43,28 @@ export const useVaultFilesStore = create<VaultFilesStore>((set, get) => ({
   searchQuery: '',
 
   setSearchQuery: (query) => set({ searchQuery: query }),
-  setFiles: (files) => set({ files }),
+  setFiles: (files) =>
+    set((state) => {
+      const fileSet = new Set(files)
+
+      const markedFileIds = new Set(
+        [...state.markedFileIds].filter((id) => fileSet.has(id)),
+      )
+
+      const baseMarkedFileIds = new Set(
+        [...state.baseMarkedFileIds].filter((id) => fileSet.has(id)),
+      )
+
+      return {
+        files,
+        markedFileIds,
+        baseMarkedFileIds,
+        lastMarkedFileId:
+          state.lastMarkedFileId && fileSet.has(state.lastMarkedFileId)
+            ? state.lastMarkedFileId
+            : undefined,
+      }
+    }),
   setSelectedFileId: (fileId, vaultId) =>
     set({
       selectedFileId: fileId,
