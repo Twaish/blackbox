@@ -3,7 +3,7 @@
   "productName": "Blackbox",
   "appId": "twaish.app.blackbox",
   "version": "1.0.0",
-  "description": "",
+  "description": "Local-First Encrypted File Vault",
   "main": "./out/main/index.js",
   "author": "Twaish",
   "repository": "https://github.com/Twaish/blackbox",
