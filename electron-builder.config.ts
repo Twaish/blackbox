@@ -28,6 +28,7 @@ const config: Configuration = {
     target: ['AppImage', 'deb'],
     icon: 'assets/icon.png',
     artifactName: artifactNameTemplate('Linux'),
+    maintainer: `${app.author} <noreply@example.com>`,
   },
   publish: [
     {
