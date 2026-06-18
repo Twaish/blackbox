@@ -26,11 +26,9 @@ function VaultFilesContent({ vaultId }: { vaultId: string }) {
     enabled: !!vaultId,
   })
 
-  if (!exists) return <ChangeLocationView />
-
   return (
     <VaultFilesContext.Provider value={vaultId}>
-      <VaultFilesBody vaultId={vaultId} />
+      {exists ? <VaultFilesBody vaultId={vaultId} /> : <ChangeLocationView />}
     </VaultFilesContext.Provider>
   )
 }
