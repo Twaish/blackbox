@@ -1,16 +1,22 @@
-<div style="display: flex; justify-content: center; align-items: center; gap: 8px; padding-block: 40px;">
-  <img src="./assets/icon.png" height=40 />
-  <span style="font-size: 28px; font-weight: 600; font-family: OCR A">
-    Blackbox
-  </span>
-</div>
+<p align="center">
+  <img src="./assets/icon.png" alt="Blackbox Logo" width="96" />
+</p> 
+<h1 align="center">Blackbox</h1>
+<p align="center">
+  Local-first encrypted file vault for Windows and Linux
+</p>
+<p align="center">
+  <a href="https://github.com/Twaish/blackbox/releases">Download</a>
+  · 
+  <a href="https://github.com/Twaish/blackbox/issues">Report Bug</a>
+  · 
+  <a href="https://github.com/Twaish/blackbox/issues">Request Feature</a>
+</p>
+<p align="center">
+  <img src="./docs/ss.png" alt="Blackbox Screenshot" width="100%" />
+</p> 
 
-<div style="display: flex; justify-content: center; padding-bottom: 40px; font-size: 16px;">
-Blackbox is a local-first encrypted file vault for Windows and Linux.
-</div>
-
-<img src="./docs/ss.png" />
-
+Blackbox is an open-source, local-first encrypted file vault for Windows and Linux. 
 
 Files and metadata are encrypted locally using AES-256-GCM. Vaults are stored as standard directories on your filesystem, allowing you to choose where data lives and how it is backed up or synchronized.
 
